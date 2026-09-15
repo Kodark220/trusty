@@ -15,7 +15,7 @@ function HireInner() {
   const router = useRouter()
   const params = useSearchParams()
   const preset = params.get('agent')
-  const { find, agents, walletAddress, liveDeposit, liveHire } = useProtocol()
+  const { find, agents, walletAddress, walletSigned, liveDeposit, liveHire } = useProtocol()
   const [query, setQuery] = useState(DEFAULT_QUERY)
   const [budget, setBudget] = useState(200)
   const [searched, setSearched] = useState(Boolean(preset))
@@ -37,8 +37,8 @@ function HireInner() {
 
   const onHire = async () => {
     if (!picked) return
-    if (!walletAddress) {
-      setError('Connect MetaMask to Studio Next before creating an escrow job.')
+    if (!walletAddress || !walletSigned) {
+      setError('Connect and sign with MetaMask before creating an escrow job.')
       return
     }
     try {
@@ -147,8 +147,8 @@ function HireInner() {
             className="mt-3 h-20 w-full rounded-lg border border-line bg-ink p-3 text-sm"
           />
               {error && <p className="mt-3 rounded-lg border border-red-400/20 bg-red-400/5 p-3 text-sm text-red-300">{error}</p>}
-              <Button onClick={onHire} disabled={!walletAddress} className="mt-4 w-full sm:w-auto">
-                {walletAddress ? `Escrow $${budget} and hire` : 'Connect MetaMask to continue'}
+              <Button onClick={onHire} disabled={!walletAddress || !walletSigned} className="mt-4 w-full sm:w-auto">
+                {walletSigned ? `Escrow $${budget} and hire` : 'Connect and sign to continue'}
               </Button>
             </CardContent>
           </Card>

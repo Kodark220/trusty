@@ -17,7 +17,7 @@ const links = [
 
 export function Header() {
   const path = usePathname()
-  const { mode, walletAddress, connectWallet, disconnectWallet } = useProtocol()
+  const { mode, walletAddress, walletSigned, connectWallet, signWallet, disconnectWallet } = useProtocol()
   return (
     <header className="sticky top-0 z-40 border-b border-line/80 bg-[#07080b]/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-3">
@@ -41,9 +41,15 @@ export function Header() {
         </nav>
         <div className="flex items-center gap-3 text-xs">
           {mode === 'live' && walletAddress ? (
-            <Button onClick={disconnectWallet} variant="ghost" className="border border-mint/30 px-2 py-1 text-xs text-mint">
-              Live {walletAddress.slice(0, 6)}…
-            </Button>
+            walletSigned ? (
+              <Button onClick={disconnectWallet} variant="ghost" className="border border-mint/30 px-2 py-1 text-xs text-mint">
+                Signed {walletAddress.slice(0, 6)}…
+              </Button>
+            ) : (
+              <Button onClick={() => signWallet().catch((error) => window.alert(error.message))} variant="secondary" className="px-2 py-1 text-xs">
+                Sign in
+              </Button>
+            )
           ) : (
             <Button onClick={() => connectWallet().catch((error) => window.alert(error.message))} variant="secondary" className="px-2 py-1 text-xs">
               Connect wallet

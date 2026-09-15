@@ -9,7 +9,7 @@ import type { Job } from '@/lib/types'
 
 function JobsInner() {
   const params = useSearchParams()
-  const { jobs, agents, deliver, verify, fileDispute, walletAddress, liveWithdraw, liveSubmitDelivery } = useProtocol()
+  const { jobs, agents, walletAddress, walletSigned, liveWithdraw, liveSubmitDelivery } = useProtocol()
   const focus = params.get('id')
   const [note, setNote] = useState('10,000-row JSONL + SHA256 manifest. All documents classified.')
   const [flash, setFlash] = useState('')
@@ -17,32 +17,17 @@ function JobsInner() {
 
   const ordered = [...jobs].sort((a, b) => b.job_id - a.job_id)
 
-  const onDeliver = async (job: Job, onTime: boolean) => {
-    if (walletAddress) {
-      try {
-        const hash = await liveSubmitDelivery(job.job_id, note)
-        setFlash(`Submitted. Validators are settling automatically: ${hash.slice(0, 12)}...`)
-      } catch (error: any) {
-        setFlash(error.message)
-      }
+  const onDeliver = async (job: Job) => {
+    if (!walletSigned) {
+      setFlash('Connect and sign with MetaMask before submitting delivery.')
       return
     }
-    deliver(job.job_id, note, onTime)
-    setFlash(`Job #${job.job_id} delivered`)
-  }
-
-  const onVerify = (job: Job, ok: boolean) => {
-    const result = verify(
-      job.job_id,
-      ok,
-      ok && job.delivered_on_time,
-      ok ? 94 : 42,
-      ok ? 100 : 40,
-      ok
-        ? 'Deliverable meets machine-readable terms. Escrow released.'
-        : 'SLA miss / incomplete artifact. Partial refund to buyer.'
-    )
-    setFlash(`Settled. Worker $${result.worker_payout} · buyer refund $${result.buyer_payout}`)
+    try {
+      const hash = await liveSubmitDelivery(job.job_id, note)
+      setFlash(`Submitted. Validators are settling automatically: ${hash.slice(0, 12)}...`)
+    } catch (error: any) {
+      setFlash(error.message)
+    }
   }
 
   return (
@@ -63,7 +48,7 @@ function JobsInner() {
           </div>
           <div className="flex gap-2">
             <input type="number" min="0" value={withdrawAmount} onChange={(e) => setWithdrawAmount(Number(e.target.value))} className="w-28 rounded-lg border border-line bg-ink px-3 py-2 font-mono text-sm" />
-            <button disabled={!walletAddress || withdrawAmount <= 0} onClick={async () => { try { const hash = await liveWithdraw(withdrawAmount); setFlash(`Withdrawal submitted: ${hash.slice(0, 12)}...`) } catch (error: any) { setFlash(error.message) } }} className="rounded-lg bg-gold px-3 py-2 text-sm font-medium text-ink disabled:opacity-40">Withdraw GEN</button>
+            <button disabled={!walletSigned || withdrawAmount <= 0} onClick={async () => { try { const hash = await liveWithdraw(withdrawAmount); setFlash(`Withdrawal submitted: ${hash.slice(0, 12)}...`) } catch (error: any) { setFlash(error.message) } }} className="rounded-lg bg-gold px-3 py-2 text-sm font-medium text-ink disabled:opacity-40">Withdraw GEN</button>
           </div>
         </div>
       </section>
@@ -108,14 +93,8 @@ function JobsInner() {
                     className="h-20 w-full rounded-lg border border-line bg-ink p-3 text-sm"
                   />
                   <div className="flex gap-2">
-                    <button onClick={() => onDeliver(job, true)} className="rounded-lg bg-gold px-3 py-2 text-sm text-ink">
-                      Deliver on time
-                    </button>
-                    <button
-                      onClick={() => onDeliver(job, false)}
-                      className="rounded-lg border border-line px-3 py-2 text-sm"
-                    >
-                      Deliver late
+                    <button disabled={!walletSigned} onClick={() => onDeliver(job)} className="rounded-lg bg-gold px-3 py-2 text-sm text-ink disabled:opacity-40">
+                      Submit delivery
                     </button>
                   </div>
                 </div>
@@ -123,24 +102,7 @@ function JobsInner() {
 
               {job.status === 'delivered' && (
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {walletAddress && <p className="w-full text-sm text-mint">Automatic validator settlement is pending. No buyer approval is required.</p>}
-                  {!walletAddress && <>
-                  <button onClick={() => onVerify(job, true)} className="rounded-lg bg-mint px-3 py-2 text-sm text-ink">
-                    Validators: terms met
-                  </button>
-                  <button
-                    onClick={() => onVerify(job, false)}
-                    className="rounded-lg border border-line px-3 py-2 text-sm"
-                  >
-                    Validators: fail / partial refund
-                  </button>
-                  <button
-                    onClick={() => fileDispute(job.job_id, 'Deliverable does not match terms', note)}
-                    className="rounded-lg border border-red-400/40 px-3 py-2 text-sm text-red-300"
-                  >
-                    File dispute
-                  </button>
-                  </>}
+                  <p className="w-full text-sm text-mint">Automatic validator settlement is pending. No buyer approval is required.</p>
                 </div>
               )}
             </article>

@@ -3,7 +3,7 @@
 import { useProtocol } from '@/lib/store'
 
 export default function DisputesPage() {
-  const { disputes, resolveDispute } = useProtocol()
+  const { disputes } = useProtocol()
   return (
     <div>
       <h1 className="font-display text-4xl">Disputes</h1>
@@ -24,26 +24,7 @@ export default function DisputesPage() {
             <p className="mt-2">{d.claim}</p>
             <p className="mt-1 text-sm text-mist">{d.evidence}</p>
             {d.status !== 'resolved' ? (
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button
-                  onClick={() => resolveDispute(d.dispute_id, 'worker', 0, 'Worker met the terms.')}
-                  className="rounded-lg bg-mint px-3 py-2 text-sm text-ink"
-                >
-                  Jury: worker
-                </button>
-                <button
-                  onClick={() => resolveDispute(d.dispute_id, 'split', 40, 'Partial delivery. 40% refund.')}
-                  className="rounded-lg border border-gold/40 px-3 py-2 text-sm text-gold"
-                >
-                  Jury: split 40%
-                </button>
-                <button
-                  onClick={() => resolveDispute(d.dispute_id, 'buyer', 100, 'Terms not met. Full refund.')}
-                  className="rounded-lg border border-red-400/40 px-3 py-2 text-sm text-red-300"
-                >
-                  Jury: buyer
-                </button>
-              </div>
+              <p className="mt-4 text-sm text-mint">Consensus review is pending. Participants cannot set the verdict.</p>
             ) : (
               <p className="mt-3 text-sm text-gold">
                 Verdict {d.verdict} · buyer share {d.buyer_share_pct}% — {d.note}

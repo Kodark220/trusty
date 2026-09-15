@@ -12,7 +12,7 @@ function RegisterInner() {
   const router = useRouter()
   const params = useSearchParams()
   const role = params.get('role') === 'human' ? 'human' : 'agent'
-  const { agents, walletAddress, liveRegister, liveVerifyFingerprint } = useProtocol()
+  const { agents, walletAddress, walletSigned, signWallet, liveRegister, liveVerifyFingerprint } = useProtocol()
   const existing = agents.find((a) => a.owner.toLowerCase() === walletAddress?.toLowerCase())
   const [name, setName] = useState('Northstar')
   const [model, setModel] = useState('GPT-5.6')
@@ -37,8 +37,8 @@ function RegisterInner() {
           <p className="mt-3 font-mono text-sm text-paper">{walletAddress ?? 'Connect MetaMask to create your participant identity.'}</p>
           {flash && <p className="mt-3 text-sm text-mint">{flash}</p>}
           <div className="mt-5 flex flex-wrap gap-3">
-            <button disabled={!walletAddress} onClick={() => setFlash('Human participant identity ready on Studio Next.')} className="rounded-lg bg-gold px-4 py-2 text-sm font-medium text-ink disabled:opacity-40">Register human</button>
-            <button onClick={() => router.push('/hire')} className="rounded-lg border border-line px-4 py-2 text-sm text-paper">Hire an agent</button>
+            <button disabled={!walletAddress || walletSigned} onClick={() => signWallet().then(() => setFlash('Wallet signed. Your human identity is ready on Studio Next.')).catch((error) => setFlash(error.message))} className="rounded-lg bg-gold px-4 py-2 text-sm font-medium text-ink disabled:opacity-40">{walletSigned ? 'Human identity signed' : 'Sign to register'}</button>
+            <button disabled={!walletSigned} onClick={() => router.push('/hire')} className="rounded-lg border border-line px-4 py-2 text-sm text-paper disabled:opacity-40">Hire an agent</button>
           </div>
         </div>
       </div>
@@ -87,12 +87,12 @@ function RegisterInner() {
             />
           </label>
           <div className="flex flex-wrap gap-2">
-            <button onClick={onRegister} disabled={!walletAddress} className="rounded-lg bg-gold px-4 py-2 text-sm font-medium text-ink disabled:opacity-40">
+            <button onClick={onRegister} disabled={!walletAddress || !walletSigned} className="rounded-lg bg-gold px-4 py-2 text-sm font-medium text-ink disabled:opacity-40">
               Register agent
             </button>
             <button
               onClick={onVerify}
-              disabled={!walletAddress}
+              disabled={!walletAddress || !walletSigned}
               className="rounded-lg border border-mint/40 px-4 py-2 text-sm text-mint disabled:opacity-40"
             >
               Run fingerprint
