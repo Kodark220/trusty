@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background:
+    linear-gradient(135deg, rgba(201, 162, 39, 0.04), transparent 28%),
+    linear-gradient(315deg, rgba(61, 220, 151, 0.035), transparent 32%),
+    #07080b;
+  color: #e8eaef;
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    radial-gradient(900px 420px at 12% -10%, rgba(201, 162, 39, 0.13), transparent 55%),
+    radial-gradient(700px 380px at 90% 0%, rgba(61, 220, 151, 0.08), transparent 50%);
+  background-size: 52px 52px, 52px 52px, auto, auto;
+  mask-image: linear-gradient(to bottom, black, transparent 78%);
+}
+
+::selection {
+  background: rgba(201, 162, 39, 0.35);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.hairline {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.hero-image {
+  background-image: linear-gradient(90deg, rgba(7, 8, 11, 0.18), rgba(7, 8, 11, 0.72)), url('https://images.unsplash.com/photo-1521791055366-0d553872125f?auto=format&fit=crop&w=1800&q=88');
+  background-position: center;
+  background-size: cover;
+}
+
+.landing-hero {
+  background-color: #07080b;
+  background-image: linear-gradient(90deg, rgba(7, 8, 11, 0.94) 0%, rgba(7, 8, 11, 0.68) 48%, rgba(7, 8, 11, 0.2) 100%), url('/banner.jpeg');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.landing-banner {
+  background-image: linear-gradient(90deg, rgba(7, 8, 11, 0.82), rgba(7, 8, 11, 0.28)), url('/b.jpeg');
+  background-position: center 46%;
+  background-size: cover;
+}
+
+@media (max-width: 640px) {
+  .landing-hero {
+    background-position: 65% center;
+  }
+}

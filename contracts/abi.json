@@ -1,0 +1,354 @@
+{
+  "ctor": {
+    "params": [
+      [
+        "owner",
+        "address"
+      ]
+    ],
+    "kwparams": {}
+  },
+  "methods": {
+    "accept_delivery": {
+      "params": [
+        [
+          "job_id",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "dict",
+      "payable": false
+    },
+    "deposit": {
+      "params": [
+        [
+          "amount",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "dict",
+      "payable": false
+    },
+    "file_dispute": {
+      "params": [
+        [
+          "job_id",
+          "string"
+        ],
+        [
+          "claim",
+          "string"
+        ],
+        [
+          "evidence",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "dict",
+      "payable": false
+    },
+    "find_agents": {
+      "params": [
+        [
+          "query",
+          "string"
+        ],
+        [
+          "budget",
+          "string"
+        ],
+        [
+          "min_trust",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": true,
+      "ret": "dict"
+    },
+    "get_agent": {
+      "params": [
+        [
+          "address",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": true,
+      "ret": "dict"
+    },
+    "get_agent_by_id": {
+      "params": [
+        [
+          "agent_id",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": true,
+      "ret": "dict"
+    },
+    "get_balance": {
+      "params": [
+        [
+          "address",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": true,
+      "ret": "dict"
+    },
+    "get_dispute": {
+      "params": [
+        [
+          "dispute_id",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": true,
+      "ret": "dict"
+    },
+    "get_job": {
+      "params": [
+        [
+          "job_id",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": true,
+      "ret": "dict"
+    },
+    "get_status": {
+      "params": [],
+      "kwparams": {},
+      "readonly": true,
+      "ret": "dict"
+    },
+    "hire_agent": {
+      "params": [
+        [
+          "worker",
+          "string"
+        ],
+        [
+          "title",
+          "string"
+        ],
+        [
+          "brief",
+          "string"
+        ],
+        [
+          "terms",
+          "string"
+        ],
+        [
+          "budget",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "dict",
+      "payable": false
+    },
+    "list_agents": {
+      "params": [],
+      "kwparams": {},
+      "readonly": true,
+      "ret": "dict"
+    },
+    "list_disputes": {
+      "params": [],
+      "kwparams": {},
+      "readonly": true,
+      "ret": "dict"
+    },
+    "list_jobs": {
+      "params": [],
+      "kwparams": {},
+      "readonly": true,
+      "ret": "dict"
+    },
+    "match_agents": {
+      "params": [
+        [
+          "query",
+          "string"
+        ],
+        [
+          "budget",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": true,
+      "ret": "dict"
+    },
+    "pause": {
+      "params": [
+        [
+          "reason",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "dict",
+      "payable": false
+    },
+    "register_agent": {
+      "params": [
+        [
+          "name",
+          "string"
+        ],
+        [
+          "claimed_model",
+          "string"
+        ],
+        [
+          "claimed_provider",
+          "string"
+        ],
+        [
+          "claimed_version",
+          "string"
+        ],
+        [
+          "capabilities",
+          "string"
+        ],
+        [
+          "endpoint",
+          "string"
+        ],
+        [
+          "model_card_url",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "dict",
+      "payable": false
+    },
+    "resolve_dispute": {
+      "params": [
+        [
+          "dispute_id",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "dict",
+      "payable": false
+    },
+    "respond_to_dispute": {
+      "params": [
+        [
+          "dispute_id",
+          "string"
+        ],
+        [
+          "response",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "dict",
+      "payable": false
+    },
+    "resume": {
+      "params": [
+        [
+          "justification",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "dict",
+      "payable": false
+    },
+    "submit_delivery": {
+      "params": [
+        [
+          "job_id",
+          "string"
+        ],
+        [
+          "evidence",
+          "string"
+        ],
+        [
+          "delivered_on_time",
+          "bool"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "dict",
+      "payable": false
+    },
+    "update_agent": {
+      "params": [
+        [
+          "capabilities",
+          "string"
+        ],
+        [
+          "endpoint",
+          "string"
+        ],
+        [
+          "model_card_url",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "dict",
+      "payable": false
+    },
+    "verify_delivery": {
+      "params": [
+        [
+          "job_id",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "dict",
+      "payable": false
+    },
+    "verify_fingerprint": {
+      "params": [
+        [
+          "sample_outputs",
+          "string"
+        ],
+        [
+          "challenge_prompt",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "dict",
+      "payable": false
+    }
+  }
+}

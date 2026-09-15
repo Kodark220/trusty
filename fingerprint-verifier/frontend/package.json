@@ -1,0 +1,8 @@
+{
+  "name": "fingerprint-verifier-demo",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "npx http-server -p 3002"
+  }
+}

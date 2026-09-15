@@ -1,0 +1,46 @@
+{
+  "network": "testnet-bradbury",
+  "rpc": "https://rpc-bradbury.genlayer.com",
+  "registry": {
+    "address": "0xf192935b08FDf586603Ac01684f1b583d7a64149",
+    "transaction": "0x9388b5463db9b3aeff678f63d91cd6236954618cf9d425ff5c454c7d03c24b3e"
+  },
+  "escrow": {
+    "address": "0xbb548D697A4f769eE3E5d00FcF11795247F0FD0a",
+    "transaction": "0x5edba71182b0bcc62d906170f4fd152c8d06a406db289dc059e98454ace9a360",
+    "contract": "AgentEscrowBradbury.py"
+  },
+  "escrow_fixed": {
+    "address": "0xaa2040C6F8B5F85b2D4beB2cF4af4Ea6b2e19b38",
+    "transaction": "0xe130e0cd27fd66d19db69dff63475d754e57a3ceecd806650942dea83c7377b3",
+    "contract": "AgentEscrowBradbury.py",
+    "fix": "normalize worker address to string"
+  },
+  "escrow_cli_fixed": {
+    "address": "0xaa2040C6F8B5F85b2D4beB2cF4af4Ea6b2e19b38",
+    "transaction": "0xe130e0cd27fd66d19db69dff63475d754e57a3ceecd806650942dea83c7377b3",
+    "contract": "AgentEscrowBradbury.py",
+    "fix": "active validated escrow; settlement requires explicit note argument"
+  },
+  "escrow_native_custody": {
+    "address": "0x919a823FaDFA183bA32D06cd0E7cd86fC1EfbE63",
+    "transaction": "0xe9d845d934e333a5a290127650b7eb63662be712c254afcd5d422ff70b54b0f7",
+    "contract": "AgentEscrowBradbury.py",
+    "fix": "payable GEN deposits and native GEN withdrawals; verify with MetaMask value-bearing deposit"
+  },
+  "escrow_auto_settlement": {
+    "address": "0xE8e4cb9cfb019FAF755D74dB01C2a5c6aD7ab441",
+    "transaction": "0x6a6e7be58e437a1b9ea10a7896d7daee5d18436177c184417b698f7e5295dd7b",
+    "contract": "AgentEscrowBradbury.py",
+    "fix": "automatic GenLayer delivery verification and settlement on submit_delivery"
+  },
+  "delivery_verifier": {
+    "address": "0x0074A395DA3ed3c0b5bA333525fE6e8138A74340",
+    "transaction": "0xdce8284a0af78ec896b58e6a89b063f6d5dd56b0e01a41eb822370e0707fb857",
+    "contract": "AgentDeliveryVerifierBradbury.py"
+  },
+  "reputation": {
+    "address": "0x22A79a30a531f1949f719aE9DE76611ac8c39ffC",
+    "transaction": "0x2b43b24b38998070b587d969dac6b5f3a3df3b7d75283b6699022a67aa3d3989"
+  }
+}

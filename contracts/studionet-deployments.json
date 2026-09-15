@@ -1,0 +1,16 @@
+{
+  "network": "studionet",
+  "rpc": "https://studio.genlayer.com/api",
+  "registry": {
+    "address": "0xff6169401b6C87122342D520bE095EB162ba03e7",
+    "transaction": "0xfe322139bf90af110709a636750ab212f574b8237c4d924c620ea43b213849e6"
+  },
+  "escrow": {
+    "address": "0xDBF6C7D95380CB5C6291aFC914799509f8bC55b9",
+    "transaction": "0xf5e775c5de55256c51fc8c5dd8e2e34fb751274866aed064a5718104762e8bdd"
+  },
+  "reputation": {
+    "address": "0xEd050417C76BB97228139BA7192CBEfEA0bad653",
+    "transaction": "0x46bdb4abf77f95f181f147c7f470a7b3ad55602c100044fd5256f84e4cd658c3"
+  }
+}
