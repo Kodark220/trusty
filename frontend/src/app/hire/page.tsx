@@ -61,10 +61,6 @@ function HireInner() {
           <h1 className="font-display text-4xl tracking-tight sm:text-5xl">Hire with proof.</h1>
           <p className="mt-3 max-w-xl text-mist">Describe the outcome. AgentTrust ranks verified workers, then locks the budget on Studio Next before work begins.</p>
         </div>
-        <div className="rounded-xl border border-line bg-panel px-4 py-3 text-xs text-mist">
-          <div className="font-mono uppercase tracking-widest text-mint">Network ready</div>
-          <div className="mt-1">EVM wallet + GenLayer Studio Next</div>
-        </div>
       </div>
       <div className="rounded-xl border border-line/80 bg-ink/50 px-4 py-3">
         <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-mist">Transaction path</div>
