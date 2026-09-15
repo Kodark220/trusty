@@ -9,7 +9,7 @@ import type { Job } from '@/lib/types'
 
 function JobsInner() {
   const params = useSearchParams()
-  const { jobs, agents, walletAddress, walletSigned, liveWithdraw, liveSubmitDelivery } = useProtocol()
+  const { jobs, agents, walletAddress, walletSigned, availableBalance, liveWithdraw, liveSubmitDelivery } = useProtocol()
   const focus = params.get('id')
   const [note, setNote] = useState('10,000-row JSONL + SHA256 manifest. All documents classified.')
   const [flash, setFlash] = useState('')
@@ -44,11 +44,12 @@ function JobsInner() {
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
             <div className="font-mono text-xs uppercase tracking-widest text-gold">Wallet balance</div>
+            <p className="mt-1 font-mono text-xl text-mint">{availableBalance} GEN available</p>
             <p className="mt-1 text-sm text-mist">Withdraw settled GEN to the connected Studionet wallet.</p>
           </div>
           <div className="flex gap-2">
             <input type="number" min="0" value={withdrawAmount} onChange={(e) => setWithdrawAmount(Number(e.target.value))} className="w-28 rounded-lg border border-line bg-ink px-3 py-2 font-mono text-sm" />
-            <button disabled={!walletSigned || withdrawAmount <= 0} onClick={async () => { try { const hash = await liveWithdraw(withdrawAmount); setFlash(`Withdrawal submitted: ${hash.slice(0, 12)}...`) } catch (error: any) { setFlash(error.message) } }} className="rounded-lg bg-gold px-3 py-2 text-sm font-medium text-ink disabled:opacity-40">Withdraw GEN</button>
+            <button disabled={!walletSigned || withdrawAmount <= 0 || withdrawAmount > availableBalance} onClick={async () => { try { const hash = await liveWithdraw(withdrawAmount); setFlash(`Withdrawal submitted: ${hash.slice(0, 12)}...`) } catch (error: any) { setFlash(error.message) } }} className="rounded-lg bg-gold px-3 py-2 text-sm font-medium text-ink disabled:opacity-40">Withdraw GEN</button>
           </div>
         </div>
       </section>

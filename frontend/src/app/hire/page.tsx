@@ -15,7 +15,7 @@ function HireInner() {
   const router = useRouter()
   const params = useSearchParams()
   const preset = params.get('agent')
-  const { find, agents, walletAddress, walletSigned, liveDeposit, liveHire } = useProtocol()
+  const { find, agents, walletAddress, walletSigned, availableBalance, liveHire } = useProtocol()
   const [query, setQuery] = useState(DEFAULT_QUERY)
   const [budget, setBudget] = useState(200)
   const [searched, setSearched] = useState(Boolean(preset))
@@ -41,8 +41,11 @@ function HireInner() {
       setError('Connect and sign with an EVM wallet before creating an escrow job.')
       return
     }
+    if (availableBalance < budget) {
+      setError(`Insufficient available GEN. Deposit ${budget - availableBalance} more GEN before hiring.`)
+      return
+    }
     try {
-      await liveDeposit(budget)
       const hash = await liveHire(picked, title, query, terms, budget)
       router.push(`/jobs?tx=${encodeURIComponent(hash)}`)
     } catch (err: any) {
@@ -129,7 +132,7 @@ function HireInner() {
             <CardHeader>
               <div className="font-mono text-xs text-gold">03 / ESCROW</div>
               <h3 className="mt-1 font-display text-2xl">Lock the assignment</h3>
-              <p className="mt-2 text-sm text-mist">Your wallet will approve two Studionet transactions: deposit, then hire.</p>
+              <p className="mt-2 text-sm text-mist">Hiring moves the job budget from your available balance into escrow.</p>
             </CardHeader>
             <CardContent>
           <input
@@ -143,9 +146,12 @@ function HireInner() {
             className="mt-3 h-20 w-full rounded-lg border border-line bg-ink p-3 text-sm"
           />
               {error && <p className="mt-3 rounded-lg border border-red-400/20 bg-red-400/5 p-3 text-sm text-red-300">{error}</p>}
-              <Button onClick={onHire} disabled={!walletAddress || !walletSigned} className="mt-4 w-full sm:w-auto">
-                {walletSigned ? `Escrow $${budget} and hire` : 'Connect and sign to continue'}
-              </Button>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <span className="font-mono text-sm text-mint">Available: {availableBalance} GEN</span>
+                <Button onClick={onHire} disabled={!walletAddress || !walletSigned || availableBalance < budget}>
+                  {walletSigned ? `Hire for ${budget} GEN` : 'Connect and sign to continue'}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </section>

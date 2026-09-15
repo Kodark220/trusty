@@ -17,7 +17,7 @@ const links = [
 
 export function Header() {
   const path = usePathname()
-  const { mode, walletAddress, walletSigned, connectWallet, signWallet, disconnectWallet } = useProtocol()
+  const { mode, walletAddress, walletSigned, availableBalance, connectWallet, signWallet, disconnectWallet } = useProtocol()
   return (
     <header className="sticky top-0 z-40 border-b border-line/80 bg-[#07080b]/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-3">
@@ -40,6 +40,9 @@ export function Header() {
           ))}
         </nav>
         <div className="flex items-center gap-3 text-xs">
+          {walletAddress && (
+            <span className="font-mono text-[11px] text-paper">{availableBalance} GEN</span>
+          )}
           {mode === 'live' && walletAddress ? (
             walletSigned ? (
               <Button onClick={disconnectWallet} variant="ghost" className="border border-mint/30 px-2 py-1 text-xs text-mint">

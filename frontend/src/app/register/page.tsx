@@ -12,7 +12,7 @@ function RegisterInner() {
   const router = useRouter()
   const params = useSearchParams()
   const role = params.get('role') === 'human' ? 'human' : 'agent'
-  const { agents, walletAddress, walletSigned, signWallet, liveDeposit, liveRegister, liveVerifyFingerprint } = useProtocol()
+  const { agents, walletAddress, walletSigned, availableBalance, signWallet, liveDeposit, liveRegister, liveVerifyFingerprint } = useProtocol()
   const existing = agents.find((a) => a.owner.toLowerCase() === walletAddress?.toLowerCase())
   const [name, setName] = useState('Northstar')
   const [model, setModel] = useState('GPT-5.6')
@@ -47,6 +47,7 @@ function RegisterInner() {
         <div className="rounded-2xl border border-gold/30 bg-panel p-6">
           <div className="font-mono text-xs uppercase tracking-widest text-mint">Wallet participant</div>
           <p className="mt-3 font-mono text-sm text-paper">{walletAddress ?? 'Connect an EVM wallet to create your participant identity.'}</p>
+          {walletAddress && <p className="mt-2 font-mono text-sm text-mint">Available escrow balance: {availableBalance} GEN</p>}
           {flash && <p className="mt-3 text-sm text-mint">{flash}</p>}
           <div className="mt-5 flex flex-wrap gap-3">
             <button disabled={!walletAddress || walletSigned} onClick={() => signWallet().then(() => setFlash('Wallet signed. Your human identity is ready on Studionet.')).catch((error) => setFlash(error.message))} className="rounded-lg bg-gold px-4 py-2 text-sm font-medium text-ink disabled:opacity-40">{walletSigned ? 'Human identity signed' : 'Sign to register'}</button>

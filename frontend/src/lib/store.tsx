@@ -24,6 +24,7 @@ type Protocol = {
   mode: 'demo' | 'live'
   walletAddress: string | null
   walletSigned: boolean
+  availableBalance: number
   connectWallet: () => Promise<void>
   signWallet: () => Promise<void>
   disconnectWallet: () => void
@@ -151,6 +152,7 @@ export function ProtocolProvider({ children }: { children: React.ReactNode }) {
       mode,
       walletAddress,
       walletSigned: Boolean(walletSignature),
+      availableBalance: walletAddress ? balances[walletAddress.toLowerCase()] || 0 : 0,
       connectWallet: async () => {
         const connected = await connectEvmWallet()
         setWalletAddress(connected.address)
@@ -176,17 +178,25 @@ export function ProtocolProvider({ children }: { children: React.ReactNode }) {
       liveDeposit: async (amount) => {
         if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign with an EVM wallet first.')
         const result = await escrowWrite(wallet, walletAddress, 'deposit', [], BigInt(amount) * BigInt(10 ** 18))
+        const balanceKey = walletAddress.toLowerCase()
+        setBalances((current) => ({ ...current, [balanceKey]: (current[balanceKey] || 0) + amount }))
         return result.hash
       },
       liveHire: async (worker, title, brief, terms, budget) => {
         if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign with an EVM wallet first.')
+        const balanceKey = walletAddress.toLowerCase()
+        if ((balances[balanceKey] || 0) < budget) throw new Error('Insufficient available GEN. Deposit funds before hiring.')
         const budgetWei = BigInt(budget) * BigInt(10 ** 18)
         const result = await escrowWrite(wallet, walletAddress, 'hire', [worker, title, brief, terms, budgetWei.toString()])
+        setBalances((current) => ({ ...current, [balanceKey]: current[balanceKey] - budget }))
         return result.hash
       },
       liveWithdraw: async (amount) => {
         if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign with an EVM wallet first.')
+        const balanceKey = walletAddress.toLowerCase()
+        if ((balances[balanceKey] || 0) < amount) throw new Error('Withdrawal exceeds your available GEN balance.')
         const result = await escrowWrite(wallet, walletAddress, 'withdraw', [String(amount) + '000000000000000000'])
+        setBalances((current) => ({ ...current, [balanceKey]: current[balanceKey] - amount }))
         return result.hash
       },
       liveSubmitDelivery: async (jobId, evidence) => {
