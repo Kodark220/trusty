@@ -18,17 +18,40 @@ const studioNext = {
 
 export type EthereumProvider = {
   request(args: { method: string; params?: unknown[] }): Promise<unknown>
+  isOkxWallet?: boolean
+  isRabby?: boolean
+  isCoinbaseWallet?: boolean
+  providers?: EthereumProvider[]
 }
 
 function provider(): EthereumProvider {
-  const value = (window as Window & { ethereum?: EthereumProvider }).ethereum
-  if (!value) throw new Error('An EVM wallet is required. Install and unlock an injected wallet such as MetaMask, Rabby, Coinbase Wallet, or Brave Wallet.')
+  const injected = window as Window & {
+    ethereum?: EthereumProvider
+    okxwallet?: EthereumProvider
+    coinbaseWalletExtension?: EthereumProvider
+  }
+  const candidates = [
+    injected.okxwallet,
+    injected.coinbaseWalletExtension,
+    ...(injected.ethereum?.providers ?? []),
+    injected.ethereum,
+  ].filter((wallet): wallet is EthereumProvider => Boolean(wallet?.request))
+  const preferred = candidates.find((wallet) => wallet.isOkxWallet || wallet.isRabby || wallet.isCoinbaseWallet)
+  const value = preferred ?? candidates[0]
+  if (!value) throw new Error('No browser EVM wallet was found. Install and unlock OKX Wallet, MetaMask, Rabby, Coinbase Wallet, or Brave Wallet, then reload this page.')
   return value
 }
 
 export async function connectEvmWallet() {
   const wallet = provider()
-  const accounts = await wallet.request({ method: 'eth_requestAccounts' }) as string[]
+  let accounts: string[]
+  try {
+    accounts = await wallet.request({ method: 'eth_requestAccounts' }) as string[]
+  } catch (error) {
+    const details = error as { code?: number; message?: string }
+    if (details.code === -32002) throw new Error('A wallet connection request is already open. Approve it in your wallet extension.')
+    throw new Error(details.message || 'Your wallet did not approve the connection request.')
+  }
   if (!accounts[0]) throw new Error('No wallet account was selected.')
   try {
     await wallet.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: STUDIO_NEXT_CHAIN_ID_HEX }] })
