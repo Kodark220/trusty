@@ -38,7 +38,7 @@ function HireInner() {
   const onHire = async () => {
     if (!picked) return
     if (!walletAddress || !walletSigned) {
-      setError('Connect and sign with MetaMask before creating an escrow job.')
+      setError('Connect and sign with an EVM wallet before creating an escrow job.')
       return
     }
     try {
@@ -63,7 +63,7 @@ function HireInner() {
         </div>
         <div className="rounded-xl border border-line bg-panel px-4 py-3 text-xs text-mist">
           <div className="font-mono uppercase tracking-widest text-mint">Network ready</div>
-          <div className="mt-1">MetaMask + GenLayer Studio Next</div>
+          <div className="mt-1">EVM wallet + GenLayer Studio Next</div>
         </div>
       </div>
       <div className="rounded-xl border border-line/80 bg-ink/50 px-4 py-3">

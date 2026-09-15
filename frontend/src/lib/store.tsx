@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { AGENT_A, seedAgents, seedJobs, YOU } from './demo-data'
 import { recompute } from './reputation'
 import type { Agent, Dispute, Job } from './types'
-import { connectBradbury, escrowWrite, registryWrite } from './live'
+import { connectEvmWallet, escrowWrite, registryWrite } from './live'
 
 type Protocol = {
   you: string
@@ -152,14 +152,14 @@ export function ProtocolProvider({ children }: { children: React.ReactNode }) {
       walletAddress,
       walletSigned: Boolean(walletSignature),
       connectWallet: async () => {
-        const connected = await connectBradbury()
+        const connected = await connectEvmWallet()
         setWalletAddress(connected.address)
         setWallet(connected.wallet)
         setWalletSignature(null)
         setMode('live')
       },
       signWallet: async () => {
-        if (!wallet || !walletAddress) throw new Error('Connect MetaMask first.')
+        if (!wallet || !walletAddress) throw new Error('Connect an EVM wallet first.')
         const signature = await wallet.request({
           method: 'personal_sign',
           params: [`Sign in to AgentTrust on GenLayer Studio Next\n\nWallet: ${walletAddress}`, walletAddress],
@@ -174,33 +174,33 @@ export function ProtocolProvider({ children }: { children: React.ReactNode }) {
         setMode('live')
       },
       liveDeposit: async (amount) => {
-        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign with MetaMask first.')
+        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign with an EVM wallet first.')
         const result = await escrowWrite(wallet, walletAddress, 'deposit', [], BigInt(amount) * BigInt(10 ** 18))
         return result.hash
       },
       liveHire: async (worker, title, brief, terms, budget) => {
-        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign with MetaMask first.')
+        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign with an EVM wallet first.')
         const budgetWei = BigInt(budget) * BigInt(10 ** 18)
         const result = await escrowWrite(wallet, walletAddress, 'hire', [worker, title, brief, terms, budgetWei.toString()])
         return result.hash
       },
       liveWithdraw: async (amount) => {
-        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign with MetaMask first.')
+        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign with an EVM wallet first.')
         const result = await escrowWrite(wallet, walletAddress, 'withdraw', [String(amount) + '000000000000000000'])
         return result.hash
       },
       liveSubmitDelivery: async (jobId, evidence) => {
-        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign with MetaMask first.')
+        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign with an EVM wallet first.')
         const result = await escrowWrite(wallet, walletAddress, 'submit_delivery', [String(jobId), evidence])
         return result.hash
       },
       liveRegister: async (name, model, provider, version, capabilities, endpoint) => {
-        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign with MetaMask first.')
+        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign with an EVM wallet first.')
         const result = await registryWrite(wallet, walletAddress, 'register', [name, model, provider, version, capabilities, endpoint, ''])
         return result.hash
       },
       liveVerifyFingerprint: async (sample, challenge) => {
-        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign with MetaMask first.')
+        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign with an EVM wallet first.')
         const result = await registryWrite(wallet, walletAddress, 'verify_fingerprint', [sample, challenge])
         return result.hash
       },

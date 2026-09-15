@@ -16,20 +16,20 @@ const studioNext = {
   rpcUrls: { default: { http: [STUDIO_NEXT_RPC] } },
 } satisfies typeof studioDevnet
 
-type EthereumProvider = {
+export type EthereumProvider = {
   request(args: { method: string; params?: unknown[] }): Promise<unknown>
 }
 
 function provider(): EthereumProvider {
   const value = (window as Window & { ethereum?: EthereumProvider }).ethereum
-  if (!value) throw new Error('MetaMask is required. Install and unlock MetaMask to use AgentTrust live mode.')
+  if (!value) throw new Error('An EVM wallet is required. Install and unlock an injected wallet such as MetaMask, Rabby, Coinbase Wallet, or Brave Wallet.')
   return value
 }
 
-export async function connectBradbury() {
+export async function connectEvmWallet() {
   const wallet = provider()
   const accounts = await wallet.request({ method: 'eth_requestAccounts' }) as string[]
-  if (!accounts[0]) throw new Error('No MetaMask account was selected.')
+  if (!accounts[0]) throw new Error('No wallet account was selected.')
   try {
     await wallet.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: STUDIO_NEXT_CHAIN_ID_HEX }] })
   } catch (error) {
@@ -78,6 +78,7 @@ export async function escrowWrite(
   const client = createClient({
     chain: studioNext,
     account: account as `0x${string}`,
+    provider: wallet,
   })
   const hash = await writeWithEstimatedFees(
     client,
@@ -102,6 +103,7 @@ export async function registryWrite(
   const client = createClient({
     chain: studioNext,
     account: account as `0x${string}`,
+    provider: wallet,
   })
   const hash = await writeWithEstimatedFees(
     client,

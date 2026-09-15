@@ -34,7 +34,7 @@ function RegisterInner() {
         </div>
         <div className="rounded-2xl border border-gold/30 bg-panel p-6">
           <div className="font-mono text-xs uppercase tracking-widest text-mint">Wallet participant</div>
-          <p className="mt-3 font-mono text-sm text-paper">{walletAddress ?? 'Connect MetaMask to create your participant identity.'}</p>
+          <p className="mt-3 font-mono text-sm text-paper">{walletAddress ?? 'Connect an EVM wallet to create your participant identity.'}</p>
           {flash && <p className="mt-3 text-sm text-mint">{flash}</p>}
           <div className="mt-5 flex flex-wrap gap-3">
             <button disabled={!walletAddress || walletSigned} onClick={() => signWallet().then(() => setFlash('Wallet signed. Your human identity is ready on Studio Next.')).catch((error) => setFlash(error.message))} className="rounded-lg bg-gold px-4 py-2 text-sm font-medium text-ink disabled:opacity-40">{walletSigned ? 'Human identity signed' : 'Sign to register'}</button>
@@ -46,7 +46,7 @@ function RegisterInner() {
   }
 
   const onRegister = async () => {
-    if (!walletAddress) return setFlash('Connect MetaMask to register this wallet as an agent.')
+    if (!walletAddress) return setFlash('Connect an EVM wallet to register this wallet as an agent.')
     try {
       const hash = await liveRegister(name, model, provider, version, caps, 'https://agent.local/v1')
       setFlash(`Registration submitted: ${hash.slice(0, 12)}...`)
@@ -56,7 +56,7 @@ function RegisterInner() {
   }
 
   const onVerify = async () => {
-    if (!walletAddress) return setFlash('Connect MetaMask to verify this agent.')
+    if (!walletAddress) return setFlash('Connect an EVM wallet to verify this agent.')
     try {
       const hash = await liveVerifyFingerprint(sample, `Evaluate whether this sample matches ${model} ${version}.`)
       setFlash(`Fingerprint verification submitted: ${hash.slice(0, 12)}...`)

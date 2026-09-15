@@ -19,7 +19,7 @@ function JobsInner() {
 
   const onDeliver = async (job: Job) => {
     if (!walletSigned) {
-      setFlash('Connect and sign with MetaMask before submitting delivery.')
+      setFlash('Connect and sign with an EVM wallet before submitting delivery.')
       return
     }
     try {
