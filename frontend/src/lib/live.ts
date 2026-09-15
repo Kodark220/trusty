@@ -11,7 +11,7 @@ export const LIVE_WORKER = process.env.NEXT_PUBLIC_AGENTTRUST_WORKER_ADDRESS || 
 const studioNext = {
   ...studioDevnet,
   id: STUDIO_NEXT_CHAIN_ID,
-  name: 'GenLayer Studio Next',
+  name: 'GenLayer Studionet',
   nativeCurrency: { name: 'GEN', symbol: 'GEN', decimals: 18 },
   rpcUrls: { default: { http: [STUDIO_NEXT_RPC] } },
 } satisfies typeof studioDevnet
@@ -61,7 +61,7 @@ export async function connectEvmWallet() {
       method: 'wallet_addEthereumChain',
       params: [{
         chainId: STUDIO_NEXT_CHAIN_ID_HEX,
-        chainName: 'GenLayer Studio Next',
+        chainName: 'GenLayer Studionet',
         nativeCurrency: { name: 'GEN', symbol: 'GEN', decimals: 18 },
         rpcUrls: [STUDIO_NEXT_RPC],
         blockExplorerUrls: ['https://explorer-studio-dev.genlayer.com/'],
@@ -72,7 +72,7 @@ export async function connectEvmWallet() {
 }
 
 function requireContractAddress(address: string, contractName: string) {
-  if (!address) throw new Error(`${contractName} is not configured. Deploy it to Studio Next, then set its address in frontend/.env.local.`)
+  if (!address) throw new Error(`${contractName} is not configured. Deploy it to Studionet, then set its address in frontend/.env.local.`)
   return address
 }
 
@@ -112,7 +112,7 @@ export async function escrowWrite(
   )
   const transaction = await client.waitForTransactionReceipt({ hash })
   if (transaction.txExecutionResultName !== 'FINISHED_WITH_RETURN') {
-    throw new Error(`Studio Next transaction failed: ${transaction.txExecutionResultName ?? 'unknown result'}`)
+    throw new Error(`Studionet transaction failed: ${transaction.txExecutionResultName ?? 'unknown result'}`)
   }
   return { hash: String(hash) }
 }
@@ -137,7 +137,7 @@ export async function registryWrite(
   )
   const transaction = await client.waitForTransactionReceipt({ hash })
   if (transaction.txExecutionResultName !== 'FINISHED_WITH_RETURN') {
-    throw new Error(`Studio Next registry transaction failed: ${transaction.txExecutionResultName ?? 'unknown result'}`)
+    throw new Error(`Studionet registry transaction failed: ${transaction.txExecutionResultName ?? 'unknown result'}`)
   }
   return { hash: String(hash) }
 }

@@ -44,7 +44,7 @@ function JobsInner() {
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
             <div className="font-mono text-xs uppercase tracking-widest text-gold">Wallet balance</div>
-            <p className="mt-1 text-sm text-mist">Withdraw settled GEN to the connected Studio Next wallet.</p>
+            <p className="mt-1 text-sm text-mist">Withdraw settled GEN to the connected Studionet wallet.</p>
           </div>
           <div className="flex gap-2">
             <input type="number" min="0" value={withdrawAmount} onChange={(e) => setWithdrawAmount(Number(e.target.value))} className="w-28 rounded-lg border border-line bg-ink px-3 py-2 font-mono text-sm" />

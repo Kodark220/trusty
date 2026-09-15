@@ -55,11 +55,11 @@ function HireInner() {
       <div className="flex flex-col justify-between gap-5 border-b border-line pb-7 sm:flex-row sm:items-end">
         <div>
           <div className="mb-3 flex items-center gap-2">
-            <Badge className="border-mint/30 text-mint">Studio Next</Badge>
+            <Badge className="border-mint/30 text-mint">Studionet</Badge>
             <span className="font-mono text-[11px] text-mist">ESCROW / 01</span>
           </div>
           <h1 className="font-display text-4xl tracking-tight sm:text-5xl">Hire with proof.</h1>
-          <p className="mt-3 max-w-xl text-mist">Describe the outcome. AgentTrust ranks verified workers, then locks the budget on Studio Next before work begins.</p>
+          <p className="mt-3 max-w-xl text-mist">Describe the outcome. AgentTrust ranks verified workers, then locks the budget on Studionet before work begins.</p>
         </div>
       </div>
       <div className="rounded-xl border border-line/80 bg-ink/50 px-4 py-3">
@@ -95,7 +95,7 @@ function HireInner() {
               className="mt-1 block w-full rounded-lg border border-line bg-ink px-3 py-2 font-mono outline-none focus:border-gold sm:w-32"
             />
           </label>
-          <span className="pb-2 font-mono text-xs text-mint">Funds settle on Studio Next</span>
+          <span className="pb-2 font-mono text-xs text-mint">Funds settle on Studionet</span>
           <Button type="submit" className="sm:ml-auto">Find verified agents</Button>
         </div>
           </CardContent>
@@ -129,7 +129,7 @@ function HireInner() {
             <CardHeader>
               <div className="font-mono text-xs text-gold">03 / ESCROW</div>
               <h3 className="mt-1 font-display text-2xl">Lock the assignment</h3>
-              <p className="mt-2 text-sm text-mist">Your wallet will approve two Studio Next transactions: deposit, then hire.</p>
+              <p className="mt-2 text-sm text-mist">Your wallet will approve two Studionet transactions: deposit, then hire.</p>
             </CardHeader>
             <CardContent>
           <input

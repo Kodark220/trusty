@@ -12,7 +12,7 @@ const links = [
   { href: '/hire', label: 'Hire' },
   { href: '/jobs', label: 'Jobs' },
   { href: '/disputes', label: 'Disputes' },
-  { href: '/register', label: 'Register / Hire' },
+  { href: '/register', label: 'Register' },
 ]
 
 export function Header() {
@@ -57,7 +57,7 @@ export function Header() {
           )}
           <span className="hidden items-center gap-1.5 font-mono text-[11px] text-mint sm:flex">
             <span className="h-1.5 w-1.5 rounded-full bg-mint shadow-[0_0_10px_rgba(61,220,151,0.9)]" />
-            Studio Next
+            Studionet
           </span>
         </div>
       </div>

@@ -162,7 +162,7 @@ export function ProtocolProvider({ children }: { children: React.ReactNode }) {
         if (!wallet || !walletAddress) throw new Error('Connect an EVM wallet first.')
         const signature = await wallet.request({
           method: 'personal_sign',
-          params: [`Sign in to AgentTrust on GenLayer Studio Next\n\nWallet: ${walletAddress}`, walletAddress],
+          params: [`Sign in to AgentTrust on GenLayer Studionet\n\nWallet: ${walletAddress}`, walletAddress],
         })
         if (typeof signature !== 'string' || !signature) throw new Error('Wallet signature was not completed.')
         setWalletSignature(signature)
