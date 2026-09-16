@@ -1,4 +1,4 @@
-import { createClient } from 'genlayer-js'
+import { createClient, isSuccessful } from 'genlayer-js'
 import { studionet } from 'genlayer-js/chains'
 
 export const STUDIONET_RPC = process.env.NEXT_PUBLIC_GENLAYER_RPC_URL || 'https://studio.genlayer.com/api'
@@ -134,8 +134,8 @@ export async function escrowWrite(
     throw new Error(await errorMessage(error, 'Your wallet could not submit the Studionet transaction.'))
   })
   const transaction = await client.waitForFinalization({ hash })
-  if (transaction.txExecutionResultName !== 'FINISHED_WITH_RETURN') {
-    throw new Error(`Studionet transaction failed: ${transaction.txExecutionResultName ?? 'unknown result'}`)
+  if (!isSuccessful(transaction)) {
+    throw new Error(`Studionet transaction failed: ${transaction.statusName ?? transaction.status ?? 'unknown status'}`)
   }
   return { hash: String(hash) }
 }
@@ -161,8 +161,8 @@ export async function registryWrite(
     throw new Error(await errorMessage(error, 'Your wallet could not submit the Studionet transaction.'))
   })
   const transaction = await client.waitForFinalization({ hash })
-  if (transaction.txExecutionResultName !== 'FINISHED_WITH_RETURN') {
-    throw new Error(`Studionet registry transaction failed: ${transaction.txExecutionResultName ?? 'unknown result'}`)
+  if (!isSuccessful(transaction)) {
+    throw new Error(`Studionet registry transaction failed: ${transaction.statusName ?? transaction.status ?? 'unknown status'}`)
   }
   return { hash: String(hash) }
 }
