@@ -12,6 +12,7 @@ const studioNetwork = studionet
 
 export type EthereumProvider = {
   request(args: { method: string; params?: unknown[] }): Promise<unknown>
+  isMetaMask?: boolean
   isOkxWallet?: boolean
   isRabby?: boolean
   isCoinbaseWallet?: boolean
@@ -54,14 +55,18 @@ async function provider(): Promise<EthereumProvider> {
       // Ignore non-EVM injected extensions.
     }
   }
-  const preferred = evmWallets.find((wallet) => wallet.isOkxWallet || wallet.isRabby || wallet.isCoinbaseWallet)
-  const value = preferred ?? evmWallets[0]
-  if (!value) throw new Error('No EVM wallet was found. Use OKX Wallet, MetaMask, Rabby, Coinbase Wallet, or Brave Wallet.')
+  const value = evmWallets.find((wallet) => wallet.isMetaMask && !wallet.isOkxWallet)
+  if (!value) throw new Error('AgentTrust on Studionet requires MetaMask with the GenLayer Snap. Open MetaMask, install the GenLayer Snap, then reconnect.')
   return value
 }
 
 export async function connectEvmWallet() {
   const wallet = await provider()
+  try {
+    await wallet.request({ method: 'wallet_getSnaps' })
+  } catch {
+    throw new Error('AgentTrust on Studionet requires MetaMask with the GenLayer Snap. Install or unlock MetaMask, then reconnect.')
+  }
   let accounts: string[]
   try {
     accounts = await wallet.request({ method: 'eth_requestAccounts' }) as string[]
@@ -86,6 +91,12 @@ export async function connectEvmWallet() {
       }],
     })
     await wallet.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: STUDIONET_CHAIN_ID_HEX }] })
+  }
+  const client = createClient({ chain: studioNetwork, account: accounts[0] as `0x${string}`, provider: wallet })
+  try {
+    await client.connect('studionet')
+  } catch (error) {
+    throw new Error(await errorMessage(error, 'Install the GenLayer Snap in MetaMask before connecting to Studionet.'))
   }
   return { address: accounts[0], wallet }
 }
