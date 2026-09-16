@@ -62,8 +62,9 @@ async function provider(): Promise<EthereumProvider> {
 
 export async function connectEvmWallet() {
   const wallet = await provider()
+  let installedSnaps: unknown
   try {
-    await wallet.request({ method: 'wallet_getSnaps' })
+    installedSnaps = await wallet.request({ method: 'wallet_getSnaps' })
   } catch {
     throw new Error('AgentTrust on Studionet requires MetaMask with the GenLayer Snap. Install or unlock MetaMask, then reconnect.')
   }
@@ -92,11 +93,15 @@ export async function connectEvmWallet() {
     })
     await wallet.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: STUDIONET_CHAIN_ID_HEX }] })
   }
-  const client = createClient({ chain: studioNetwork, account: accounts[0] as `0x${string}`, provider: wallet })
-  try {
-    await client.connect('studionet')
-  } catch (error) {
-    throw new Error(await errorMessage(error, 'Install the GenLayer Snap in MetaMask before connecting to Studionet.'))
+  const snapInstalled = Object.values(installedSnaps as Record<string, { id?: string }>).some(
+    (snap) => snap?.id === 'npm:genlayer-wallet-plugin',
+  )
+  if (!snapInstalled) {
+    try {
+      await wallet.request({ method: 'wallet_requestSnaps', params: [{ 'npm:genlayer-wallet-plugin': {} }] })
+    } catch (error) {
+      throw new Error(await errorMessage(error, 'Install the GenLayer Snap in MetaMask before connecting to Studionet.'))
+    }
   }
   return { address: accounts[0], wallet }
 }
