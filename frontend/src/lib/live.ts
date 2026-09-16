@@ -118,7 +118,13 @@ async function writeWithEstimatedFees(
   args: unknown[],
   value: bigint,
 ) {
-  const call = { address: address as `0x${string}`, functionName, args, value }
+  const call = {
+    address: address as `0x${string}`,
+    functionName,
+    args,
+    value,
+    leaderOnly: functionName === 'deposit',
+  }
   return client.writeContract(call as never)
 }
 
