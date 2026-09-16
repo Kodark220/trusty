@@ -39,6 +39,23 @@ class AgentRegistry(gl.Contract):
             digest = (digest * 131 + ord(char)) % 18446744073709551616
         return hex(digest)
 
+    def _agent_public(self, agent: RegistryAgent) -> dict:
+        return {
+            "owner": agent.owner,
+            "name": agent.name,
+            "claimed_model": agent.claimed_model,
+            "provider": agent.provider,
+            "version": agent.version,
+            "capabilities": agent.capabilities,
+            "endpoint": agent.endpoint,
+            "model_card_url": agent.model_card_url,
+            "fingerprint_hash": agent.fingerprint_hash,
+            "status": agent.status,
+            "score": int(agent.score),
+            "note": agent.note,
+            "active": agent.active,
+        }
+
     @gl.public.write
     def register(
         self,
@@ -72,7 +89,7 @@ class AgentRegistry(gl.Contract):
         )
         self.agents[sender] = agent
         self.agent_keys.append(sender)
-        return self.get_agent(sender)
+        return self._agent_public(agent)
 
     @gl.public.write
     def attest_capability(self, sample: str, note: str) -> dict:
@@ -87,7 +104,7 @@ class AgentRegistry(gl.Contract):
         agent.score = gl.u256(0)
         agent.note = note.strip()[:400] or "Capability sample attested by owner"
         self.agents[sender] = agent
-        return self.get_agent(sender)
+        return self._agent_public(agent)
 
     @gl.public.write
     def update_profile(
@@ -101,33 +118,19 @@ class AgentRegistry(gl.Contract):
         agent.endpoint = endpoint.strip()
         agent.model_card_url = model_card_url.strip()
         self.agents[sender] = agent
-        return self.get_agent(sender)
+        return self._agent_public(agent)
 
     @gl.public.view
     def get_agent(self, address: str) -> dict:
         if address not in self.agents:
             self._fail("Agent not found")
         agent = self.agents[address]
-        return {
-            "owner": agent.owner,
-            "name": agent.name,
-            "claimed_model": agent.claimed_model,
-            "provider": agent.provider,
-            "version": agent.version,
-            "capabilities": agent.capabilities,
-            "endpoint": agent.endpoint,
-            "model_card_url": agent.model_card_url,
-            "fingerprint_hash": agent.fingerprint_hash,
-            "status": agent.status,
-            "score": int(agent.score),
-            "note": agent.note,
-            "active": agent.active,
-        }
+        return self._agent_public(agent)
 
     @gl.public.view
     def list_active(self) -> dict:
         result = []
         for address in self.agent_keys:
             if address in self.agents and self.agents[address].active:
-                result.append(self.get_agent(address))
+                result.append(self._agent_public(self.agents[address]))
         return {"agents": result, "total": len(result)}
