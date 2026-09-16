@@ -1,20 +1,7 @@
-"""Direct coverage for the standalone live agent registry."""
-
-import json
+"""Direct coverage for the deterministic agent directory."""
 
 
-FINGERPRINT = json.dumps(
-    json.dumps(
-        {
-            "score": 96,
-            "verdict": "verified",
-            "note": "The sample is consistent with the claimed model.",
-        }
-    )
-)
-
-
-def test_register_and_verify_agent(direct_vm, direct_deploy, direct_bob):
+def test_register_and_attest_agent(direct_vm, direct_deploy, direct_bob):
     contract = direct_deploy("contracts/AgentRegistry.py")
     direct_vm.sender = direct_bob
 
@@ -29,9 +16,8 @@ def test_register_and_verify_agent(direct_vm, direct_deploy, direct_bob):
     )
     assert registered["status"] == "unverified"
 
-    direct_vm.mock_llm(r".*You verify an agent model claim.*", FINGERPRINT)
-    verified = contract.verify_fingerprint("structured JSON refusals and citations " * 3, "summarize this 10k corpus")
+    attested = contract.attest_capability("structured JSON refusals and citations " * 3, "Owner-attested response sample")
 
-    assert verified["status"] == "verified"
-    assert verified["score"] == 96
-    assert contract.list_verified()["total"] == 1
+    assert attested["status"] == "attested"
+    assert attested["fingerprint_hash"]
+    assert contract.list_active()["total"] == 1

@@ -1,10 +1,9 @@
 const steps = [
-  'Reputation',
-  'Selection',
-  'Escrow',
-  'Work',
-  'Verification',
-  'Settlement',
+  'Discover',
+  'Request',
+  'Proposal',
+  'Agreement',
+  'Outcome',
   'Reputation',
 ]
 

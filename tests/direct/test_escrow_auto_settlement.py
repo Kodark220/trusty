@@ -1,41 +1,59 @@
-"""Direct coverage for the live escrow's automatic settlement workflow."""
-
-import json
+"""Direct coverage for the no-custody agent negotiation ledger."""
 
 
-DELIVERY = json.dumps(
-    json.dumps(
-        {
-            "worker_share_pct": 100,
-            "explanation": "The evidence satisfies the agreed deliverable.",
-        }
+def set_sender(vm, sender):
+    import genlayer.gl as gl
+    from genlayer.py.types import Address, u256
+
+    vm.sender = sender
+    message = gl.message
+    gl.message = gl.MessageType(
+        contract_address=message.contract_address,
+        sender_address=Address(sender),
+        origin_address=Address(sender),
+        value=u256(vm._value),
+        chain_id=u256(vm._chain_id),
     )
-)
 
 
-def test_delivery_settles_without_buyer_verification(direct_vm, direct_deploy, direct_alice, direct_bob):
+def test_agents_negotiate_and_record_reputation(direct_vm, direct_deploy, direct_alice, direct_bob):
+    registry = direct_deploy("contracts/AgentRegistry.py")
+    provider = "0x" + direct_bob.hex()
+
+    set_sender(direct_vm, direct_alice)
+    registry.register("Requester", "GPT-5.6", "OpenAI", "5.6", "research", "https://requester.example/api", "")
+    set_sender(direct_vm, direct_bob)
+    registry.register("Provider", "Claude 4.1", "Anthropic", "4.1", "document analysis", "https://provider.example/api", "")
+    assert registry.list_active()["total"] == 2
+
     contract = direct_deploy("contracts/AgentEscrowBradbury.py")
+    set_sender(direct_vm, direct_alice)
+    created = contract.create_negotiation(
+        "negotiation-001",
+        provider,
+        "Document analysis",
+        "Analyze the corpus and return structured findings.",
+        "JSONL output within four hours.",
+        "200 USD",
+    )
+    assert created["status"] == "requested"
 
-    direct_vm.sender = direct_alice
-    direct_vm.value = 200
-    buyer = contract.deposit()["address"]
-    direct_vm.value = 0
+    set_sender(direct_vm, direct_bob)
+    proposed = contract.propose(created["negotiation_id"], "JSONL output with source links within four hours.", "225 USD")
+    assert proposed["status"] == "proposed"
 
-    direct_vm.sender = direct_bob
-    direct_vm.value = 1
-    worker = contract.deposit()["address"]
-    direct_vm.value = 0
+    set_sender(direct_vm, direct_alice)
+    agreed = contract.accept(created["negotiation_id"])
+    assert agreed["status"] == "agreed"
 
-    direct_vm.sender = direct_alice
-    hired = contract.hire(worker, "Document analysis", "Analyze the corpus", "Return a JSONL report.", "200")
-    assert hired["status"] == "escrowed"
+    set_sender(direct_vm, direct_bob)
+    delivered = contract.submit_outcome(created["negotiation_id"], "manifest sha256 and complete JSONL report", "Completed as agreed.")
+    assert delivered["status"] == "delivered"
 
-    direct_vm.sender = direct_bob
-    direct_vm.mock_llm(r".*Evaluate this agent delivery.*", DELIVERY)
-    settled = contract.submit_delivery(str(hired["job_id"]), "manifest sha256 and complete JSONL report")
-
-    assert settled["status"] == "settled"
-    assert settled["worker_payout"] == 200
-    assert settled["buyer_payout"] == 0
-    assert contract.get_job(str(hired["job_id"]))["status"] == "settled"
-    assert buyer != worker
+    set_sender(direct_vm, direct_alice)
+    completed = contract.confirm_outcome(created["negotiation_id"], True, "Outcome accepted by requesting agent.")
+    assert completed["status"] == "completed"
+    reputation = contract.get_reputation(provider)
+    assert reputation["completed"] == 1
+    assert reputation["successful"] == 1
+    assert reputation["disputed"] == 0

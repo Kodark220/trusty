@@ -4,7 +4,7 @@ import { studionet } from 'genlayer-js/chains'
 export const STUDIONET_RPC = process.env.NEXT_PUBLIC_GENLAYER_RPC_URL || 'https://studio.genlayer.com/api'
 export const STUDIONET_CHAIN_ID = 61999
 export const STUDIONET_CHAIN_ID_HEX = '0xF22F'
-export const AGENTTRUST_ESCROW = process.env.NEXT_PUBLIC_AGENTTRUST_ESCROW_ADDRESS || ''
+export const AGENTTRUST_MARKETPLACE = process.env.NEXT_PUBLIC_AGENTTRUST_MARKETPLACE_ADDRESS || ''
 export const AGENTTRUST_REGISTRY = process.env.NEXT_PUBLIC_AGENTTRUST_REGISTRY_ADDRESS || ''
 export const LIVE_WORKER = process.env.NEXT_PUBLIC_AGENTTRUST_WORKER_ADDRESS || ''
 
@@ -55,19 +55,13 @@ async function provider(): Promise<EthereumProvider> {
       // Ignore non-EVM injected extensions.
     }
   }
-  const value = evmWallets.find((wallet) => wallet.isMetaMask && !wallet.isOkxWallet)
-  if (!value) throw new Error('AgentTrust on Studionet requires MetaMask with the GenLayer Snap. Open MetaMask, install the GenLayer Snap, then reconnect.')
+  const value = evmWallets.find((wallet) => wallet.isMetaMask && !wallet.isOkxWallet) ?? evmWallets[0]
+  if (!value) throw new Error('Open an EVM wallet extension, then reconnect.')
   return value
 }
 
 export async function connectEvmWallet() {
   const wallet = await provider()
-  let installedSnaps: unknown
-  try {
-    installedSnaps = await wallet.request({ method: 'wallet_getSnaps' })
-  } catch {
-    throw new Error('AgentTrust on Studionet requires MetaMask with the GenLayer Snap. Install or unlock MetaMask, then reconnect.')
-  }
   let accounts: string[]
   try {
     accounts = await wallet.request({ method: 'eth_requestAccounts' }) as string[]
@@ -77,32 +71,6 @@ export async function connectEvmWallet() {
     throw new Error(details.message || 'Your wallet did not approve the connection request.')
   }
   if (!accounts[0]) throw new Error('No wallet account was selected.')
-  try {
-    await wallet.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: STUDIONET_CHAIN_ID_HEX }] })
-  } catch (error) {
-    if ((error as { code?: number }).code !== 4902) throw error
-    await wallet.request({
-      method: 'wallet_addEthereumChain',
-      params: [{
-        chainId: STUDIONET_CHAIN_ID_HEX,
-        chainName: 'GenLayer Studionet',
-        nativeCurrency: { name: 'GEN', symbol: 'GEN', decimals: 18 },
-        rpcUrls: [STUDIONET_RPC],
-        blockExplorerUrls: ['https://explorer-studio.genlayer.com/'],
-      }],
-    })
-    await wallet.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: STUDIONET_CHAIN_ID_HEX }] })
-  }
-  const snapInstalled = Object.values(installedSnaps as Record<string, { id?: string }>).some(
-    (snap) => snap?.id === 'npm:genlayer-wallet-plugin',
-  )
-  if (!snapInstalled) {
-    try {
-      await wallet.request({ method: 'wallet_requestSnaps', params: [{ 'npm:genlayer-wallet-plugin': {} }] })
-    } catch (error) {
-      throw new Error(await errorMessage(error, 'Install the GenLayer Snap in MetaMask before connecting to Studionet.'))
-    }
-  }
   return { address: accounts[0], wallet }
 }
 
@@ -128,7 +96,7 @@ async function writeWithEstimatedFees(
   return client.writeContract(call as never)
 }
 
-export async function escrowWrite(
+export async function marketplaceWrite(
   wallet: EthereumProvider,
   account: string,
   functionName: string,
@@ -142,7 +110,7 @@ export async function escrowWrite(
   })
   const hash = await writeWithEstimatedFees(
     client,
-    requireContractAddress(AGENTTRUST_ESCROW, 'AgentTrust escrow'),
+    requireContractAddress(AGENTTRUST_MARKETPLACE, 'AgentTrust marketplace'),
     functionName,
     args,
     value,

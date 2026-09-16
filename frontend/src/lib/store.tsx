@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { AGENT_A, seedAgents, seedJobs, YOU } from './demo-data'
 import { recompute } from './reputation'
 import type { Agent, Dispute, Job } from './types'
-import { connectEvmWallet, escrowWrite, registryWrite } from './live'
+import { connectEvmWallet, marketplaceWrite, registryWrite } from './live'
 
 type Protocol = {
   you: string
@@ -15,7 +15,7 @@ type Protocol = {
   register: (input: Omit<Agent, 'agent_id' | 'metrics' | 'fingerprint_status' | 'fingerprint_score' | 'fingerprint_note' | 'jobs_completed' | 'jobs_failed' | 'sla_hits' | 'sla_misses' | 'tx_success' | 'tx_fail' | 'disputes_opened' | 'disputes_lost' | 'active'>) => Agent
   verifyFingerprint: (owner: string, note: string, score: number, status: Agent['fingerprint_status']) => Agent
   find: (query: string, budget: number) => Agent[]
-  hire: (worker: string, title: string, brief: string, terms: string, budget: number) => Job
+  hire: (worker: string, title: string, brief: string, terms: string, budget: number) => Promise<Job>
   deliver: (jobId: number, evidence: string, onTime: boolean) => Job
   verify: (jobId: number, ok: boolean, sla: boolean, quality: number, share: number, note: string) => Job
   fileDispute: (jobId: number, claim: string, evidence: string) => Dispute
@@ -28,12 +28,12 @@ type Protocol = {
   connectWallet: () => Promise<void>
   signWallet: () => Promise<void>
   disconnectWallet: () => void
-  liveDeposit: (amount: number) => Promise<string>
-  liveHire: (worker: string, title: string, brief: string, terms: string, budget: number) => Promise<string>
-  liveWithdraw: (amount: number) => Promise<string>
-  liveSubmitDelivery: (jobId: number, evidence: string) => Promise<string>
+  propose: (jobId: number, terms: string, budget: number) => Promise<Job>
+  agree: (jobId: number) => Promise<Job>
+  complete: (jobId: number, evidence: string, quality: number) => Promise<Job>
+  confirm: (jobId: number, successful: boolean, note: string) => Promise<Job>
   liveRegister: (name: string, model: string, provider: string, version: string, capabilities: string, endpoint: string) => Promise<string>
-  liveVerifyFingerprint: (sample: string, challenge: string) => Promise<string>
+  liveAttestCapability: (sample: string, note: string) => Promise<string>
 }
 
 const KEY = 'agenttrust.v1'
@@ -67,7 +67,7 @@ export function ProtocolProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false)
   const [mode, setMode] = useState<'demo' | 'live'>('live')
   const [walletAddress, setWalletAddress] = useState<string | null>(null)
-  const [wallet, setWallet] = useState<Parameters<typeof escrowWrite>[0] | null>(null)
+  const [wallet, setWallet] = useState<Awaited<ReturnType<typeof connectEvmWallet>>['wallet'] | null>(null)
   const [walletSignature, setWalletSignature] = useState<string | null>(null)
 
   useEffect(() => {
@@ -121,8 +121,7 @@ export function ProtocolProvider({ children }: { children: React.ReactNode }) {
       const buyerPay = job.budget - workerPay
       const settled: Job = {
         ...job,
-        status: 'settled',
-        escrowed: 0,
+        status: 'completed',
         sla_met: sla,
         quality_score: quality,
         settlement_note: note,
@@ -175,43 +174,51 @@ export function ProtocolProvider({ children }: { children: React.ReactNode }) {
         setWalletSignature(null)
         setMode('live')
       },
-      liveDeposit: async (amount) => {
-        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign with an EVM wallet first.')
-        const result = await escrowWrite(wallet, walletAddress, 'deposit', [], BigInt(amount) * BigInt(10 ** 18))
-        const balanceKey = walletAddress.toLowerCase()
-        setBalances((current) => ({ ...current, [balanceKey]: (current[balanceKey] || 0) + amount }))
-        return result.hash
+      propose: async (jobId, terms, budget) => {
+        const job = jobs.find((item) => item.job_id === jobId)
+        if (!job) throw new Error('Negotiation not found')
+        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign an EVM wallet first.')
+        await marketplaceWrite(wallet, walletAddress, 'propose', [job.chain_id, terms, `$${budget}`])
+        const updated = { ...job, terms, budget, status: 'proposed' as const, settlement_note: 'A counterproposal is ready for the requesting agent.' }
+        setJobs((list) => list.map((item) => item.job_id === jobId ? updated : item))
+        return updated
       },
-      liveHire: async (worker, title, brief, terms, budget) => {
-        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign with an EVM wallet first.')
-        const balanceKey = walletAddress.toLowerCase()
-        if ((balances[balanceKey] || 0) < budget) throw new Error('Insufficient available GEN. Deposit funds before hiring.')
-        const budgetWei = BigInt(budget) * BigInt(10 ** 18)
-        const result = await escrowWrite(wallet, walletAddress, 'hire', [worker, title, brief, terms, budgetWei.toString()])
-        setBalances((current) => ({ ...current, [balanceKey]: current[balanceKey] - budget }))
-        return result.hash
+      agree: async (jobId) => {
+        const job = jobs.find((item) => item.job_id === jobId)
+        if (!job) throw new Error('Negotiation not found')
+        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign an EVM wallet first.')
+        await marketplaceWrite(wallet, walletAddress, 'accept', [job.chain_id])
+        const updated = { ...job, status: 'agreed' as const, settlement_note: 'Both agents accepted the scope and terms.' }
+        setJobs((list) => list.map((item) => item.job_id === jobId ? updated : item))
+        return updated
       },
-      liveWithdraw: async (amount) => {
-        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign with an EVM wallet first.')
-        const balanceKey = walletAddress.toLowerCase()
-        if ((balances[balanceKey] || 0) < amount) throw new Error('Withdrawal exceeds your available GEN balance.')
-        const result = await escrowWrite(wallet, walletAddress, 'withdraw', [String(amount) + '000000000000000000'])
-        setBalances((current) => ({ ...current, [balanceKey]: current[balanceKey] - amount }))
-        return result.hash
+      complete: async (jobId, evidence, quality) => {
+        const job = jobs.find((item) => item.job_id === jobId)
+        if (!job) throw new Error('Negotiation not found')
+        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign an EVM wallet first.')
+        await marketplaceWrite(wallet, walletAddress, 'submit_outcome', [job.chain_id, evidence, 'Outcome submitted by provider agent.'])
+        const updated = { ...job, evidence, quality_score: quality, sla_met: true, delivered_on_time: true, status: 'delivered' as const, settlement_note: 'Outcome submitted. Awaiting requester confirmation.' }
+        setJobs((list) => list.map((item) => item.job_id === jobId ? updated : item))
+        return updated
       },
-      liveSubmitDelivery: async (jobId, evidence) => {
-        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign with an EVM wallet first.')
-        const result = await escrowWrite(wallet, walletAddress, 'submit_delivery', [String(jobId), evidence])
-        return result.hash
+      confirm: async (jobId, successful, note) => {
+        const job = jobs.find((item) => item.job_id === jobId)
+        if (!job) throw new Error('Negotiation not found')
+        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign an EVM wallet first.')
+        await marketplaceWrite(wallet, walletAddress, 'confirm_outcome', [job.chain_id, successful, note])
+        const updated = { ...job, status: 'completed' as const, settlement_note: note || 'Outcome confirmed by requester agent.' }
+        setJobs((list) => list.map((item) => item.job_id === jobId ? updated : item))
+        patchAgent(job.worker, (agent) => ({ ...agent, jobs_completed: agent.jobs_completed + 1, tx_success: agent.tx_success + 1, sla_hits: agent.sla_hits + 1 }))
+        return updated
       },
       liveRegister: async (name, model, provider, version, capabilities, endpoint) => {
-        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign with an EVM wallet first.')
+        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign an EVM wallet first.')
         const result = await registryWrite(wallet, walletAddress, 'register', [name, model, provider, version, capabilities, endpoint, ''])
         return result.hash
       },
-      liveVerifyFingerprint: async (sample, challenge) => {
-        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign with an EVM wallet first.')
-        const result = await registryWrite(wallet, walletAddress, 'verify_fingerprint', [sample, challenge])
+      liveAttestCapability: async (sample, note) => {
+        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign an EVM wallet first.')
+        const result = await registryWrite(wallet, walletAddress, 'attest_capability', [sample, note])
         return result.hash
       },
       agents,
@@ -256,18 +263,20 @@ export function ProtocolProvider({ children }: { children: React.ReactNode }) {
         return updated || agents.find((a) => a.owner === owner)!
       },
       find,
-      hire: (worker, title, brief, terms, budget) => {
-        if ((balances[YOU] || 0) < budget) throw new Error('Insufficient balance')
+      hire: async (worker, title, brief, terms, budget) => {
+        if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign an EVM wallet first.')
+        const chainId = `${walletAddress.toLowerCase()}-${Date.now()}`
+        await marketplaceWrite(wallet, walletAddress, 'create_negotiation', [chainId, worker, title, brief, terms, `$${budget}`])
         const job: Job = {
           job_id: Math.max(0, ...jobs.map((j) => j.job_id)) + 1,
-          buyer: YOU,
+          chain_id: chainId,
+          buyer: walletAddress,
           worker,
           title,
           brief,
           terms,
           budget,
-          escrowed: budget,
-          status: 'escrowed',
+          status: 'requested',
           evidence: '',
           delivered_on_time: false,
           quality_score: 0,
@@ -276,7 +285,6 @@ export function ProtocolProvider({ children }: { children: React.ReactNode }) {
           buyer_payout: 0,
           worker_payout: 0,
         }
-        setBalances((b) => ({ ...b, [YOU]: (b[YOU] || 0) - budget }))
         setJobs((list) => [job, ...list])
         return job
       },

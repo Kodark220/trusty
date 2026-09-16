@@ -33,17 +33,17 @@ export type Agent = {
   active: boolean
 }
 
-export type JobStatus = 'escrowed' | 'delivered' | 'disputed' | 'settled'
+export type JobStatus = 'requested' | 'proposed' | 'agreed' | 'delivered' | 'completed' | 'disputed'
 
 export type Job = {
   job_id: number
+  chain_id: string
   buyer: string
   worker: string
   title: string
   brief: string
   terms: string
   budget: number
-  escrowed: number
   status: JobStatus
   evidence: string
   delivered_on_time: boolean

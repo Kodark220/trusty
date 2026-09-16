@@ -12,7 +12,7 @@ function RegisterInner() {
   const router = useRouter()
   const params = useSearchParams()
   const role = params.get('role') === 'human' ? 'human' : 'agent'
-  const { agents, walletAddress, walletSigned, availableBalance, signWallet, liveDeposit, liveRegister, liveVerifyFingerprint } = useProtocol()
+  const { agents, walletAddress, walletSigned, signWallet, register, verifyFingerprint, liveRegister, liveAttestCapability } = useProtocol()
   const existing = agents.find((a) => a.owner.toLowerCase() === walletAddress?.toLowerCase())
   const [name, setName] = useState('Northstar')
   const [model, setModel] = useState('GPT-5.6')
@@ -27,35 +27,28 @@ function RegisterInner() {
 
   if (role === 'human') {
     const onDeposit = async () => {
-      if (!walletSigned) return setFlash('Connect and sign with an EVM wallet before depositing GEN.')
-      if (!Number.isFinite(depositAmount) || depositAmount <= 0) return setFlash('Enter a positive deposit amount.')
-      try {
-        const hash = await liveDeposit(depositAmount)
-        setFlash(`Deposit submitted: ${hash.slice(0, 12)}...`)
-      } catch (error: any) {
-        setFlash(error.message)
-      }
+      if (!walletSigned) return setFlash('Connect and sign a wallet before creating an agent request.')
+      router.push('/hire')
     }
 
     return (
       <div className="mx-auto max-w-3xl space-y-8">
         <div>
           <div className="font-mono text-xs uppercase tracking-[0.2em] text-gold">Human participant</div>
-          <h1 className="mt-3 font-display text-5xl tracking-tight">Register to commission work.</h1>
-          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-mist">Your wallet is your human identity on AgentTrust. You can hire agents, fund escrow, review delivery status, and receive refunds.</p>
+          <h1 className="mt-3 font-display text-5xl tracking-tight">Bring an agent to the market.</h1>
+          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-mist">Your wallet proves ownership when you list or manage an agent. Browse the directory freely, then let agents negotiate directly.</p>
         </div>
         <div className="rounded-2xl border border-gold/30 bg-panel p-6">
           <div className="font-mono text-xs uppercase tracking-widest text-mint">Wallet participant</div>
           <p className="mt-3 font-mono text-sm text-paper">{walletAddress ?? 'Connect an EVM wallet to create your participant identity.'}</p>
-          {walletAddress && <p className="mt-2 font-mono text-sm text-mint">Available escrow balance: {availableBalance} GEN</p>}
           {flash && <p className="mt-3 text-sm text-mint">{flash}</p>}
           <div className="mt-5 flex flex-wrap gap-3">
-            <button disabled={!walletAddress || walletSigned} onClick={() => signWallet().then(() => setFlash('Wallet signed. Your human identity is ready on Studionet.')).catch((error) => setFlash(error.message))} className="rounded-lg bg-gold px-4 py-2 text-sm font-medium text-ink disabled:opacity-40">{walletSigned ? 'Human identity signed' : 'Sign to register'}</button>
-            <button disabled={!walletSigned} onClick={() => router.push('/hire')} className="rounded-lg border border-line px-4 py-2 text-sm text-paper disabled:opacity-40">Hire an agent</button>
+            <button disabled={!walletAddress || walletSigned} onClick={() => signWallet().then(() => setFlash('Wallet signed. Your agent identity is ready.')).catch((error) => setFlash(error.message))} className="rounded-lg bg-gold px-4 py-2 text-sm font-medium text-ink disabled:opacity-40">{walletSigned ? 'Identity signed' : 'Sign identity'}</button>
+            <button disabled={!walletSigned} onClick={onDeposit} className="rounded-lg border border-line px-4 py-2 text-sm text-paper disabled:opacity-40">Find an agent</button>
           </div>
           <div className="mt-6 border-t border-line pt-5">
             <label className="block text-[11px] uppercase tracking-widest text-mist">
-              Deposit GEN
+              Proposed value
               <input
                 type="number"
                 min="1"
@@ -64,7 +57,7 @@ function RegisterInner() {
                 className="mt-1 block w-full rounded-lg border border-line bg-ink px-3 py-2 font-mono text-sm text-paper outline-none focus:border-gold"
               />
             </label>
-            <button disabled={!walletSigned || depositAmount <= 0} onClick={onDeposit} className="mt-3 rounded-lg border border-mint/40 px-4 py-2 text-sm font-medium text-mint disabled:opacity-40">Deposit GEN</button>
+            <button disabled={!walletSigned || depositAmount <= 0} onClick={onDeposit} className="mt-3 rounded-lg border border-mint/40 px-4 py-2 text-sm font-medium text-mint disabled:opacity-40">Start a request</button>
           </div>
         </div>
       </div>
@@ -75,7 +68,8 @@ function RegisterInner() {
     if (!walletAddress) return setFlash('Connect an EVM wallet to register this wallet as an agent.')
     try {
       const hash = await liveRegister(name, model, provider, version, caps, 'https://agent.local/v1')
-      setFlash(`Registration submitted: ${hash.slice(0, 12)}...`)
+      register({ owner: walletAddress, name, claimed_model: model, claimed_provider: provider, claimed_version: version, capabilities: caps, endpoint: 'https://agent.local/v1' })
+      setFlash(`Agent listed on-chain: ${hash.slice(0, 12)}...`)
     } catch (error: any) {
       setFlash(error.message)
     }
@@ -84,8 +78,9 @@ function RegisterInner() {
   const onVerify = async () => {
     if (!walletAddress) return setFlash('Connect an EVM wallet to verify this agent.')
     try {
-      const hash = await liveVerifyFingerprint(sample, `Evaluate whether this sample matches ${model} ${version}.`)
-      setFlash(`Fingerprint verification submitted: ${hash.slice(0, 12)}...`)
+      const hash = await liveAttestCapability(sample, `Owner-attested capability sample for ${model} ${version}.`)
+      verifyFingerprint(walletAddress, `Owner-attested capability sample for ${model} ${version}.`, 0, 'inconclusive')
+      setFlash(`Capability evidence recorded on-chain: ${hash.slice(0, 12)}...`)
     } catch (error: any) {
       setFlash(error.message)
     }
@@ -94,9 +89,9 @@ function RegisterInner() {
   return (
     <div className="grid gap-8 lg:grid-cols-2">
       <div>
-        <h1 className="font-display text-4xl">Register + fingerprint</h1>
+        <h1 className="font-display text-4xl">List an agent</h1>
         <p className="mt-2 text-mist">
-          Claims are cheap. A fingerprint is evidence. Unverified agents start at authenticity 0, which pulls overall trust down.
+          Publish what your agent does, where it can be reached, and its model details. Completed negotiations build the reputation buyers see.
         </p>
         <div className="mt-6 space-y-3">
           <Field label="Name" value={name} onChange={setName} />
@@ -121,7 +116,7 @@ function RegisterInner() {
               disabled={!walletAddress || !walletSigned}
               className="rounded-lg border border-mint/40 px-4 py-2 text-sm text-mint disabled:opacity-40"
             >
-              Run fingerprint
+              Add capability sample
             </button>
           </div>
           {flash && <p className="rounded-lg border border-line bg-panel p-3 text-sm text-mint">{flash}</p>}
@@ -142,7 +137,7 @@ function RegisterInner() {
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-line p-6 text-sm text-mist">
-            Register first. Authenticity stays 0 until a fingerprint lands.
+            List an agent to create its public marketplace profile.
           </div>
         )}
       </div>

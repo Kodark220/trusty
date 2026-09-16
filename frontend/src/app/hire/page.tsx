@@ -15,7 +15,7 @@ function HireInner() {
   const router = useRouter()
   const params = useSearchParams()
   const preset = params.get('agent')
-  const { find, agents, walletAddress, walletSigned, availableBalance, liveHire } = useProtocol()
+  const { find, agents, walletAddress, walletSigned, hire } = useProtocol()
   const [query, setQuery] = useState(DEFAULT_QUERY)
   const [budget, setBudget] = useState(200)
   const [searched, setSearched] = useState(Boolean(preset))
@@ -38,16 +38,12 @@ function HireInner() {
   const onHire = async () => {
     if (!picked) return
     if (!walletAddress || !walletSigned) {
-      setError('Connect and sign with an EVM wallet before creating an escrow job.')
-      return
-    }
-    if (availableBalance < budget) {
-      setError(`Insufficient available GEN. Deposit ${budget - availableBalance} more GEN before hiring.`)
+      setError('Connect and sign a wallet before creating an agent request.')
       return
     }
     try {
-      const hash = await liveHire(picked, title, query, terms, budget)
-      router.push(`/jobs?tx=${encodeURIComponent(hash)}`)
+      const negotiation = await hire(picked, title, query, terms, budget)
+      router.push(`/jobs?id=${negotiation.job_id}`)
     } catch (err: any) {
       setError(err.message)
     }
@@ -58,11 +54,11 @@ function HireInner() {
       <div className="flex flex-col justify-between gap-5 border-b border-line pb-7 sm:flex-row sm:items-end">
         <div>
           <div className="mb-3 flex items-center gap-2">
-            <Badge className="border-mint/30 text-mint">Studionet</Badge>
-            <span className="font-mono text-[11px] text-mist">ESCROW / 01</span>
+            <Badge className="border-mint/30 text-mint">Agent-to-agent</Badge>
+            <span className="font-mono text-[11px] text-mist">NEGOTIATION / 01</span>
           </div>
-          <h1 className="font-display text-4xl tracking-tight sm:text-5xl">Hire with proof.</h1>
-          <p className="mt-3 max-w-xl text-mist">Describe the outcome. AgentTrust ranks verified workers, then locks the budget on Studionet before work begins.</p>
+          <h1 className="font-display text-4xl tracking-tight sm:text-5xl">Find an agent. Start a deal.</h1>
+          <p className="mt-3 max-w-xl text-mist">Describe the outcome. AgentTrust ranks proven workers and gives both agents a shared record for negotiating scope, value, and delivery.</p>
         </div>
       </div>
       <div className="rounded-xl border border-line/80 bg-ink/50 px-4 py-3">
@@ -98,8 +94,8 @@ function HireInner() {
               className="mt-1 block w-full rounded-lg border border-line bg-ink px-3 py-2 font-mono outline-none focus:border-gold sm:w-32"
             />
           </label>
-          <span className="pb-2 font-mono text-xs text-mint">Funds settle on Studionet</span>
-          <Button type="submit" className="sm:ml-auto">Find verified agents</Button>
+          <span className="pb-2 font-mono text-xs text-mint">A proposed value, not escrow</span>
+          <Button type="submit" className="sm:ml-auto">Find agents</Button>
         </div>
           </CardContent>
         </Card>
@@ -130,9 +126,9 @@ function HireInner() {
         <section>
           <Card className="border-gold/30 bg-panel">
             <CardHeader>
-              <div className="font-mono text-xs text-gold">03 / ESCROW</div>
-              <h3 className="mt-1 font-display text-2xl">Lock the assignment</h3>
-              <p className="mt-2 text-sm text-mist">Hiring moves the job budget from your available balance into escrow.</p>
+              <div className="font-mono text-xs text-gold">03 / REQUEST</div>
+              <h3 className="mt-1 font-display text-2xl">Open a negotiation</h3>
+              <p className="mt-2 text-sm text-mist">Your agent sends the scope and proposed value. The other agent can counter, accept, or decline.</p>
             </CardHeader>
             <CardContent>
           <input
@@ -147,9 +143,9 @@ function HireInner() {
           />
               {error && <p className="mt-3 rounded-lg border border-red-400/20 bg-red-400/5 p-3 text-sm text-red-300">{error}</p>}
               <div className="mt-4 flex flex-wrap items-center gap-3">
-                <span className="font-mono text-sm text-mint">Available: {availableBalance} GEN</span>
-                <Button onClick={onHire} disabled={!walletAddress || !walletSigned || availableBalance < budget}>
-                  {walletSigned ? `Hire for ${budget} GEN` : 'Connect and sign to continue'}
+                <span className="font-mono text-sm text-mint">Proposed value: ${budget}</span>
+                <Button onClick={onHire} disabled={!walletAddress || !walletSigned}>
+                  {walletSigned ? 'Send negotiation request' : 'Connect and sign to continue'}
                 </Button>
               </div>
             </CardContent>

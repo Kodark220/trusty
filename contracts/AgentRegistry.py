@@ -1,7 +1,6 @@
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 from dataclasses import dataclass
 from genlayer import *
-import json
 
 
 @allow_storage
@@ -23,7 +22,7 @@ class RegistryAgent:
 
 
 class AgentRegistry(gl.Contract):
-    """Standalone Studionet registry and GenLayer fingerprint verifier."""
+    """Deterministic on-chain directory for agent-owned public profiles."""
 
     agents: TreeMap[str, RegistryAgent]
     agent_keys: DynArray[str]
@@ -34,22 +33,11 @@ class AgentRegistry(gl.Contract):
     def _fail(self, message: str) -> None:
         raise gl.vm.UserError(f"[EXPECTED] {message}")
 
-    def _clamp(self, value: int) -> int:
-        return max(0, min(100, value))
-
-    def _parse(self, raw) -> dict:
-        if isinstance(raw, dict):
-            return raw
-        text = str(raw).strip()
-        start = text.find("{")
-        end = text.rfind("}")
-        if start < 0 or end <= start:
-            return {}
-        try:
-            value = json.loads(text[start : end + 1])
-            return value if isinstance(value, dict) else {}
-        except Exception:
-            return {}
+    def _digest(self, content: str) -> str:
+        digest = 0
+        for char in content[:1600]:
+            digest = (digest * 131 + ord(char)) % 18446744073709551616
+        return hex(digest)
 
     @gl.public.write
     def register(
@@ -79,7 +67,7 @@ class AgentRegistry(gl.Contract):
             fingerprint_hash="",
             status="unverified",
             score=gl.u256(0),
-            note="Fingerprint verification required",
+            note="Profile is owner-attested",
             active=True,
         )
         self.agents[sender] = agent
@@ -87,40 +75,31 @@ class AgentRegistry(gl.Contract):
         return self.get_agent(sender)
 
     @gl.public.write
-    def verify_fingerprint(self, sample_outputs: str, challenge_prompt: str) -> dict:
+    def attest_capability(self, sample: str, note: str) -> dict:
         sender = str(gl.message.sender_address)
         if sender not in self.agents:
             self._fail("Agent not registered")
-        if len(sample_outputs.strip()) < 20:
-            self._fail("Fingerprint sample is too short")
+        if len(sample.strip()) < 20:
+            self._fail("Capability sample is too short")
         agent = self.agents[sender]
-        memory_agent = gl.storage.copy_to_memory(agent)
+        agent.fingerprint_hash = self._digest(sample)
+        agent.status = "attested"
+        agent.score = gl.u256(0)
+        agent.note = note.strip()[:400] or "Capability sample attested by owner"
+        self.agents[sender] = agent
+        return self.get_agent(sender)
 
-        def judge() -> str:
-            prompt = f"""You verify an agent model claim.
-CLAIM: {memory_agent.provider} {memory_agent.claimed_model} {memory_agent.version}
-CHALLENGE: {challenge_prompt[:800]}
-SAMPLE: {sample_outputs[:2500]}
-Return JSON only with score 0-100, verdict verified/mismatched/inconclusive, and note."""
-            return gl.nondet.exec_prompt(prompt, response_format="json")
-
-        raw = gl.eq_principle.prompt_comparative(
-            judge,
-            "Verdict category must match and scores must be within 10 points.",
-        )
-        result = self._parse(raw)
-        verdict = str(result.get("verdict", "inconclusive")).lower()
-        if verdict not in ("verified", "mismatched", "inconclusive"):
-            verdict = "inconclusive"
-        score = self._clamp(int(result.get("score", 40)))
-        note = str(result.get("note", result.get("explanation", "")))[:400]
-        digest = 0
-        for char in challenge_prompt[:400] + "|" + sample_outputs[:400]:
-            digest = (digest * 131 + ord(char)) % 18446744073709551616
-        agent.fingerprint_hash = hex(digest)
-        agent.status = verdict
-        agent.score = gl.u256(score)
-        agent.note = note
+    @gl.public.write
+    def update_profile(
+        self, capabilities: str, endpoint: str, model_card_url: str
+    ) -> dict:
+        sender = str(gl.message.sender_address)
+        if sender not in self.agents:
+            self._fail("Agent not registered")
+        agent = self.agents[sender]
+        agent.capabilities = capabilities.strip()
+        agent.endpoint = endpoint.strip()
+        agent.model_card_url = model_card_url.strip()
         self.agents[sender] = agent
         return self.get_agent(sender)
 
@@ -146,9 +125,9 @@ Return JSON only with score 0-100, verdict verified/mismatched/inconclusive, and
         }
 
     @gl.public.view
-    def list_verified(self) -> dict:
+    def list_active(self) -> dict:
         result = []
         for address in self.agent_keys:
-            if address in self.agents and self.agents[address].status == "verified":
+            if address in self.agents and self.agents[address].active:
                 result.append(self.get_agent(address))
         return {"agents": result, "total": len(result)}

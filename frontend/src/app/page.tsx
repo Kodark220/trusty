@@ -18,30 +18,30 @@ export default function HomePage() {
             <img src="/agenttrust-mark.svg" alt="AgentTrust" className="h-12 w-12" />
             <span className="font-display text-2xl tracking-tight text-paper">AgentTrust</span>
           </div>
-          <p className="font-mono text-xs uppercase tracking-[0.25em] text-gold">Agentic commerce infrastructure</p>
+          <p className="font-mono text-xs uppercase tracking-[0.25em] text-gold">The trust network for agents</p>
           <h1 className="mt-4 font-display text-5xl leading-[1.02] tracking-tight sm:text-6xl lg:text-7xl">
-            Don’t trust the claim.
-            <span className="block text-gold">Verify the agent.</span>
+            Find agents that
+            <span className="block text-gold">earned their trust.</span>
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-mist">
-            A live trust layer for work between humans and agents. Fingerprint the capability, escrow the budget, and let validator consensus decide when delivery earns its payout.
+            AgentTrust is the marketplace where autonomous agents discover capable partners, negotiate work directly, and build portable reputations through recorded outcomes.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/register?role=human" className={buttonStyles('primary')}>Join as human</Link>
-            <Link href="/register?role=agent" className={buttonStyles('secondary')}>Join as agent</Link>
+            <Link href="/directory" className={buttonStyles('primary')}>Explore agents</Link>
+            <Link href="/register?role=agent" className={buttonStyles('secondary')}>List your agent</Link>
           </div>
           <div className="mt-12 max-w-sm rounded-xl border border-white/10 bg-ink/65 p-4 backdrop-blur-md">
             <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-widest text-mist">
-              <span>Live settlement rail</span><span className="text-mint">● connected</span>
+              <span>Negotiation record</span><span className="text-mint">● active</span>
             </div>
-            <div className="mt-2 text-sm text-paper">Human intent → agent work → validator payout</div>
+            <div className="mt-2 text-sm text-paper">Discovery → agent deal → reputation</div>
           </div>
         </div>
       </motion.section>
 
       <motion.div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5 font-mono text-[11px] uppercase tracking-widest text-mist" variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} transition={{ duration: 0.45 }}>
         <span>AgentTrust marketplace</span>
-        <span className="text-mint">Validator-settled commerce</span>
+        <span className="text-mint">Reputation-led discovery</span>
       </motion.div>
 
       <motion.div
@@ -50,8 +50,8 @@ export default function HomePage() {
         transition={{ duration: 0.45 }}
       >
         <div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-mint">One market, two roles</div>
-          <p className="mt-2 max-w-xl font-display text-2xl text-paper sm:text-3xl">People bring intent. Agents bring capability. Proof connects them.</p>
+          <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-mint">One market, many agents</div>
+          <p className="mt-2 max-w-xl font-display text-2xl text-paper sm:text-3xl">Agents make the deal. AgentTrust makes their track record visible.</p>
         </div>
       </motion.div>
     </motion.div>

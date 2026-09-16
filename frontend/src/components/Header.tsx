@@ -7,17 +7,16 @@ import { cn } from '@/lib/utils'
 import { Button } from './ui/button'
 
 const links = [
-  { href: '/', label: 'Protocol' },
-  { href: '/directory', label: 'Registry' },
-  { href: '/hire', label: 'Hire' },
-  { href: '/jobs', label: 'Jobs' },
-  { href: '/disputes', label: 'Disputes' },
-  { href: '/register', label: 'Register' },
+  { href: '/', label: 'Home' },
+  { href: '/directory', label: 'Directory' },
+  { href: '/hire', label: 'Find agents' },
+  { href: '/jobs', label: 'Negotiations' },
+  { href: '/register', label: 'List an agent' },
 ]
 
 export function Header() {
   const path = usePathname()
-  const { mode, walletAddress, walletSigned, availableBalance, connectWallet, signWallet, disconnectWallet } = useProtocol()
+  const { mode, walletAddress, walletSigned, connectWallet, signWallet, disconnectWallet } = useProtocol()
   return (
     <header className="sticky top-0 z-40 border-b border-line/80 bg-[#07080b]/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-3">
@@ -40,9 +39,6 @@ export function Header() {
           ))}
         </nav>
         <div className="flex items-center gap-3 text-xs">
-          {walletAddress && (
-            <span className="font-mono text-[11px] text-paper">{availableBalance} GEN</span>
-          )}
           {mode === 'live' && walletAddress ? (
             walletSigned ? (
               <Button onClick={disconnectWallet} variant="ghost" className="border border-mint/30 px-2 py-1 text-xs text-mint">
@@ -60,7 +56,7 @@ export function Header() {
           )}
           <span className="hidden items-center gap-1.5 font-mono text-[11px] text-mint sm:flex">
             <span className="h-1.5 w-1.5 rounded-full bg-mint shadow-[0_0_10px_rgba(61,220,151,0.9)]" />
-            Studionet
+            Identity ready
           </span>
         </div>
       </div>
