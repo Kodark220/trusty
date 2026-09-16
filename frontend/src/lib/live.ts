@@ -9,6 +9,13 @@ export const AGENTTRUST_REGISTRY = process.env.NEXT_PUBLIC_AGENTTRUST_REGISTRY_A
 export const LIVE_WORKER = process.env.NEXT_PUBLIC_AGENTTRUST_WORKER_ADDRESS || ''
 
 const studioNetwork = studionet
+const studionetChain = {
+  chainId: STUDIONET_CHAIN_ID_HEX,
+  chainName: 'GenLayer Studionet',
+  nativeCurrency: { name: 'GEN', symbol: 'GEN', decimals: 18 },
+  rpcUrls: [STUDIONET_RPC],
+  blockExplorerUrls: ['https://explorer-studio.genlayer.com'],
+}
 
 export type EthereumProvider = {
   request(args: { method: string; params?: unknown[] }): Promise<unknown>
@@ -60,6 +67,25 @@ async function provider(): Promise<EthereumProvider> {
   return value
 }
 
+async function ensureStudionet(wallet: EthereumProvider) {
+  const chainId = await wallet.request({ method: 'eth_chainId' })
+  if (typeof chainId === 'string' && chainId.toLowerCase() === STUDIONET_CHAIN_ID_HEX.toLowerCase()) return
+  try {
+    await wallet.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: STUDIONET_CHAIN_ID_HEX }] })
+  } catch (error) {
+    const details = error as { code?: number; message?: string }
+    if (details.code !== 4902) {
+      throw new Error(details.message || 'Switch your wallet to GenLayer Studionet, then try again.')
+    }
+    try {
+      await wallet.request({ method: 'wallet_addEthereumChain', params: [studionetChain] })
+    } catch (addError) {
+      const addDetails = addError as { message?: string }
+      throw new Error(addDetails.message || 'Add GenLayer Studionet to your wallet, then try again.')
+    }
+  }
+}
+
 export async function connectEvmWallet() {
   const wallet = await provider()
   let accounts: string[]
@@ -71,6 +97,7 @@ export async function connectEvmWallet() {
     throw new Error(details.message || 'Your wallet did not approve the connection request.')
   }
   if (!accounts[0]) throw new Error('No wallet account was selected.')
+  await ensureStudionet(wallet)
   return { address: accounts[0], wallet }
 }
 
@@ -81,11 +108,13 @@ function requireContractAddress(address: string, contractName: string) {
 
 async function writeWithEstimatedFees(
   client: ReturnType<typeof createClient>,
+  wallet: EthereumProvider,
   address: string,
   functionName: string,
   args: unknown[],
   value: bigint,
 ) {
+  await ensureStudionet(wallet)
   const call = {
     address: address as `0x${string}`,
     functionName,
@@ -110,6 +139,7 @@ export async function marketplaceWrite(
   })
   const hash = await writeWithEstimatedFees(
     client,
+    wallet,
     requireContractAddress(AGENTTRUST_MARKETPLACE, 'AgentTrust marketplace'),
     functionName,
     args,
@@ -137,6 +167,7 @@ export async function registryWrite(
   })
   const hash = await writeWithEstimatedFees(
     client,
+    wallet,
     requireContractAddress(AGENTTRUST_REGISTRY, 'AgentTrust registry'),
     functionName,
     args,
