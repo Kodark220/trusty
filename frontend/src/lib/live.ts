@@ -1,5 +1,6 @@
 import { createClient, isSuccessful } from 'genlayer-js'
 import { studionet } from 'genlayer-js/chains'
+import { encodeFunctionData } from 'viem'
 
 export const STUDIONET_RPC = process.env.NEXT_PUBLIC_GENLAYER_RPC_URL || 'https://studio.genlayer.com/api'
 export const STUDIONET_CHAIN_ID = 61999
@@ -10,6 +11,9 @@ const configuredRegistry = process.env.NEXT_PUBLIC_AGENTTRUST_REGISTRY_ADDRESS
 export const AGENTTRUST_REGISTRY = configuredRegistry && configuredRegistry.toLowerCase() !== legacyRegistry.toLowerCase()
   ? configuredRegistry
   : '0x120B30d7CBad18f9cc0a4286418731dC882134E8'
+export const BASE_SEPOLIA_CHAIN_ID_HEX = '0x14A34'
+export const BASE_SEPOLIA_RPC = process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL || 'https://sepolia.base.org'
+export const BASE_REGISTRY = process.env.NEXT_PUBLIC_AGENTTRUST_BASE_REGISTRY_ADDRESS || ''
 export const LIVE_WORKER = process.env.NEXT_PUBLIC_AGENTTRUST_WORKER_ADDRESS || ''
 
 const studioNetwork = studionet
@@ -20,6 +24,32 @@ const studionetChain = {
   rpcUrls: [STUDIONET_RPC],
   blockExplorerUrls: ['https://explorer-studio.genlayer.com'],
 }
+const baseSepoliaChain = {
+  chainId: BASE_SEPOLIA_CHAIN_ID_HEX,
+  chainName: 'Base Sepolia',
+  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+  rpcUrls: [BASE_SEPOLIA_RPC],
+  blockExplorerUrls: ['https://sepolia.basescan.org'],
+}
+const baseRegistryAbi = [{
+  type: 'function',
+  name: 'register',
+  stateMutability: 'nonpayable',
+  inputs: [{
+    name: 'input',
+    type: 'tuple',
+    components: [
+      { name: 'name', type: 'string' },
+      { name: 'claimedModel', type: 'string' },
+      { name: 'provider', type: 'string' },
+      { name: 'version', type: 'string' },
+      { name: 'capabilities', type: 'string' },
+      { name: 'endpoint', type: 'string' },
+      { name: 'modelCardUrl', type: 'string' },
+    ],
+  }],
+  outputs: [],
+}] as const
 
 export type EthereumProvider = {
   request(args: { method: string; params?: unknown[] }): Promise<unknown>
@@ -90,6 +120,18 @@ async function ensureStudionet(wallet: EthereumProvider) {
   }
 }
 
+async function ensureBaseSepolia(wallet: EthereumProvider) {
+  const chainId = await wallet.request({ method: 'eth_chainId' })
+  if (typeof chainId === 'string' && chainId.toLowerCase() === BASE_SEPOLIA_CHAIN_ID_HEX.toLowerCase()) return
+  try {
+    await wallet.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: BASE_SEPOLIA_CHAIN_ID_HEX }] })
+  } catch (error) {
+    const details = error as { code?: number; message?: string }
+    if (details.code !== 4902) throw new Error(details.message || 'Switch your wallet to Base Sepolia, then try again.')
+    await wallet.request({ method: 'wallet_addEthereumChain', params: [baseSepoliaChain] })
+  }
+}
+
 export async function connectEvmWallet() {
   const wallet = await provider()
   let accounts: string[]
@@ -101,7 +143,6 @@ export async function connectEvmWallet() {
     throw new Error(details.message || 'Your wallet did not approve the connection request.')
   }
   if (!accounts[0]) throw new Error('No wallet account was selected.')
-  await ensureStudionet(wallet)
   return { address: accounts[0], wallet }
 }
 
@@ -184,4 +225,28 @@ export async function registryWrite(
     throw new Error(`Studionet registry transaction failed: ${transaction.statusName ?? transaction.status ?? 'unknown status'}`)
   }
   return { hash: String(hash) }
+}
+
+export async function baseRegistryWrite(
+  wallet: EthereumProvider,
+  account: string,
+  input: { name: string; claimedModel: string; provider: string; version: string; capabilities: string; endpoint: string; modelCardUrl: string },
+): Promise<{ hash: string }> {
+  if (!BASE_REGISTRY) throw new Error('Base registry is not configured. Deploy contracts/base/AgentRegistry.sol to Base Sepolia, then set NEXT_PUBLIC_AGENTTRUST_BASE_REGISTRY_ADDRESS.')
+  await ensureBaseSepolia(wallet)
+  const data = encodeFunctionData({ abi: baseRegistryAbi, functionName: 'register', args: [input] })
+  const hash = await wallet.request({
+    method: 'eth_sendTransaction',
+    params: [{ from: account, to: BASE_REGISTRY, data, value: '0x0' }],
+  })
+  if (typeof hash !== 'string') throw new Error('Your wallet did not return a Base Sepolia transaction hash.')
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    const receipt = await wallet.request({ method: 'eth_getTransactionReceipt', params: [hash] }) as { status?: string } | null
+    if (receipt) {
+      if (receipt.status !== '0x1') throw new Error('Base Sepolia registration transaction reverted.')
+      return { hash }
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+  }
+  throw new Error(`Base Sepolia transaction is pending: ${hash}`)
 }

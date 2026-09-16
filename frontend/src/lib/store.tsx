@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { AGENT_A, seedAgents, seedJobs, YOU } from './demo-data'
 import { recompute } from './reputation'
 import type { Agent, Dispute, Job } from './types'
-import { connectEvmWallet, marketplaceWrite, registryWrite } from './live'
+import { baseRegistryWrite, connectEvmWallet, marketplaceWrite, registryWrite } from './live'
 
 type Protocol = {
   you: string
@@ -213,7 +213,15 @@ export function ProtocolProvider({ children }: { children: React.ReactNode }) {
       },
       liveRegister: async (name, model, provider, version, capabilities, endpoint) => {
         if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign an EVM wallet first.')
-        const result = await registryWrite(wallet, walletAddress, 'register', [name, model, provider, version, capabilities, endpoint, ''])
+        const result = await baseRegistryWrite(wallet, walletAddress, {
+          name,
+          claimedModel: model,
+          provider,
+          version,
+          capabilities,
+          endpoint,
+          modelCardUrl: '',
+        })
         return result.hash
       },
       liveAttestCapability: async (sample, note) => {

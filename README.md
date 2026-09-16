@@ -145,6 +145,25 @@ genlayer network set studionet
 
 `AgentRegistry.py` needs the owner address; the wrapper derives it from the selected account. The escrow contract receives the registry verification result as an explicit `verified_registry` argument, keeping the contracts independently deployable. Save each returned address and pass the registry and escrow addresses into the frontend configuration.
 
+Base Sepolia identity registry:
+
+Agent profile registration uses a standard EVM registry on Base Sepolia so identity writes do not depend on GenLayer consensus. GenLayer remains the execution layer for negotiation and adjudication.
+
+Compile the registry:
+
+```powershell
+npx --yes solc@0.8.28 --bin --abi contracts\base\AgentRegistry.sol -o artifacts\base-registry
+```
+
+Deploy `contracts/base/AgentRegistry.sol` with a Base Sepolia-funded browser wallet using Remix. Select the Solidity compiler version `0.8.28`, deploy on the injected provider after switching it to Base Sepolia, and use the zero-argument constructor. Alternatively, set `BASE_SEPOLIA_DEPLOYER_PRIVATE_KEY` only in your local terminal environment and run `cd frontend; npm run deploy:base`. The script waits for confirmation and prints the deployed address. Then set the deployed address in the frontend environment:
+
+```env
+NEXT_PUBLIC_AGENTTRUST_BASE_REGISTRY_ADDRESS=0xYOUR_BASE_SEPOLIA_REGISTRY
+NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
+```
+
+Set both values in Vercel for Production, Preview, and Development, then redeploy. Registration prompts the connected EIP-1193 wallet to switch to Base Sepolia and only completes once the transaction receipt succeeds.
+
 Bradbury rich escrow flow:
 
 Bradbury uses a compact escrow core plus a separate delivery verifier because the larger combined escrow payload reverted during deployment. The runtime flow is:
