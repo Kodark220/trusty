@@ -1,7 +1,6 @@
-# { "Depends": "py-genlayer:5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng" }
+# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 from dataclasses import dataclass
-import genlayer as gl
-from genlayer.storage import allow as allow_storage
+from genlayer import *
 import json
 
 
@@ -17,31 +16,31 @@ class _Recipient:
 @allow_storage
 @dataclass
 class Job:
-    job_id: gl.u256
+    job_id: u256
     buyer: str
     worker: str
     title: str
     brief: str
     terms: str
-    budget: gl.u256
-    escrowed: gl.u256
+    budget: u256
+    escrowed: u256
     status: str
     evidence: str
-    worker_payout: gl.u256
-    buyer_payout: gl.u256
+    worker_payout: u256
+    buyer_payout: u256
     note: str
 
 
-class AgentEscrowBradbury(gl.contract.Contract):
-    """Compact Bradbury escrow: hire, evidence submission, and settlement."""
+class AgentEscrow(gl.Contract):
+    """Studionet escrow: hire, evidence submission, and settlement."""
 
-    next_job_id: gl.u256
-    job_keys: gl.storage.DynArray[str]
-    jobs: gl.storage.TreeMap[str, Job]
-    balances: gl.storage.TreeMap[str, gl.u256]
+    next_job_id: u256
+    job_keys: DynArray[str]
+    jobs: TreeMap[str, Job]
+    balances: TreeMap[str, u256]
 
     def __init__(self):
-        self.next_job_id = gl.u256(1)
+        self.next_job_id = u256(1)
 
     def _fail(self, message: str) -> None:
         raise gl.vm.UserError(f"[EXPECTED] {message}")
@@ -54,13 +53,13 @@ class AgentEscrowBradbury(gl.contract.Contract):
 
     def _credit(self, address: str, amount: int) -> None:
         current = int(self.balances[address]) if address in self.balances else 0
-        self.balances[address] = gl.u256(current + amount)
+        self.balances[address] = u256(current + amount)
 
     def _debit(self, address: str, amount: int) -> None:
         current = int(self.balances[address]) if address in self.balances else 0
         if current < amount:
             self._fail("Insufficient balance")
-        self.balances[address] = gl.u256(current - amount)
+        self.balances[address] = u256(current - amount)
 
     def _judge_delivery(self, job: Job) -> tuple[int, str]:
         def evaluate() -> str:
@@ -98,7 +97,7 @@ Return JSON only with worker_share_pct from 0 to 100 and explanation."""
         if value <= 0:
             self._fail("Withdrawal must be positive")
         self._debit(sender, value)
-        _Recipient(gl.Address(sender)).emit_transfer(value=gl.u256(value))
+        _Recipient(Address(sender)).emit_transfer(value=u256(value))
         return {"address": sender, "withdrawn": value, "balance": int(self.balances[sender])}
 
     @gl.public.write
@@ -113,13 +112,13 @@ Return JSON only with worker_share_pct from 0 to 100 and explanation."""
         self._debit(buyer, amount)
         job_id = int(self.next_job_id)
         self.jobs[str(job_id)] = Job(
-            job_id=gl.u256(job_id), buyer=buyer, worker=worker,
+            job_id=u256(job_id), buyer=buyer, worker=worker,
             title=title.strip(), brief=brief.strip(), terms=terms.strip(),
-            budget=gl.u256(amount), escrowed=gl.u256(amount), status="escrowed",
-            evidence="", worker_payout=gl.u256(0), buyer_payout=gl.u256(0), note="",
+            budget=u256(amount), escrowed=u256(amount), status="escrowed",
+            evidence="", worker_payout=u256(0), buyer_payout=u256(0), note="",
         )
         self.job_keys.append(str(job_id))
-        self.next_job_id = gl.u256(job_id + 1)
+        self.next_job_id = u256(job_id + 1)
         return {"job_id": job_id, "status": "escrowed", "budget": amount}
 
     @gl.public.write
@@ -143,9 +142,9 @@ Return JSON only with worker_share_pct from 0 to 100 and explanation."""
         self._credit(job.worker, worker_payout)
         self._credit(job.buyer, buyer_payout)
         job.status = "settled"
-        job.escrowed = gl.u256(0)
-        job.worker_payout = gl.u256(worker_payout)
-        job.buyer_payout = gl.u256(buyer_payout)
+        job.escrowed = u256(0)
+        job.worker_payout = u256(worker_payout)
+        job.buyer_payout = u256(buyer_payout)
         job.note = explanation or "Automatic validator settlement"
         self.jobs[key] = job
         return {"job_id": int(job.job_id), "status": "settled", "worker_payout": worker_payout, "buyer_payout": buyer_payout, "note": job.note}
@@ -168,9 +167,9 @@ Return JSON only with worker_share_pct from 0 to 100 and explanation."""
         self._credit(job.worker, worker_payout)
         self._credit(job.buyer, buyer_payout)
         job.status = "settled"
-        job.escrowed = gl.u256(0)
-        job.worker_payout = gl.u256(worker_payout)
-        job.buyer_payout = gl.u256(buyer_payout)
+        job.escrowed = u256(0)
+        job.worker_payout = u256(worker_payout)
+        job.buyer_payout = u256(buyer_payout)
         job.note = note.strip() or "Buyer settlement"
         self.jobs[key] = job
         return {"job_id": int(job.job_id), "status": "settled", "worker_payout": worker_payout, "buyer_payout": buyer_payout, "note": job.note}

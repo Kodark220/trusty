@@ -1,20 +1,20 @@
 import { createClient } from 'genlayer-js'
-import { studioDevnet } from 'genlayer-js/chains'
+import { studionet } from 'genlayer-js/chains'
 
-export const STUDIO_NEXT_RPC = process.env.NEXT_PUBLIC_GENLAYER_RPC_URL || 'https://studio-dev.genlayer.com/api'
-export const STUDIO_NEXT_CHAIN_ID = 61997
-export const STUDIO_NEXT_CHAIN_ID_HEX = '0xF22D'
+export const STUDIONET_RPC = process.env.NEXT_PUBLIC_GENLAYER_RPC_URL || 'https://studio.genlayer.com/api'
+export const STUDIONET_CHAIN_ID = 61999
+export const STUDIONET_CHAIN_ID_HEX = '0xF22F'
 export const AGENTTRUST_ESCROW = process.env.NEXT_PUBLIC_AGENTTRUST_ESCROW_ADDRESS || ''
 export const AGENTTRUST_REGISTRY = process.env.NEXT_PUBLIC_AGENTTRUST_REGISTRY_ADDRESS || ''
 export const LIVE_WORKER = process.env.NEXT_PUBLIC_AGENTTRUST_WORKER_ADDRESS || ''
 
-const studioNext = {
-  ...studioDevnet,
-  id: STUDIO_NEXT_CHAIN_ID,
+const studioNetwork = {
+  ...studionet,
+  id: STUDIONET_CHAIN_ID,
   name: 'GenLayer Studionet',
   nativeCurrency: { name: 'GEN', symbol: 'GEN', decimals: 18 },
-  rpcUrls: { default: { http: [STUDIO_NEXT_RPC] } },
-} satisfies typeof studioDevnet
+  rpcUrls: { default: { http: [STUDIONET_RPC] } },
+} satisfies typeof studionet
 
 export type EthereumProvider = {
   request(args: { method: string; params?: unknown[] }): Promise<unknown>
@@ -54,19 +54,20 @@ export async function connectEvmWallet() {
   }
   if (!accounts[0]) throw new Error('No wallet account was selected.')
   try {
-    await wallet.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: STUDIO_NEXT_CHAIN_ID_HEX }] })
+    await wallet.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: STUDIONET_CHAIN_ID_HEX }] })
   } catch (error) {
     if ((error as { code?: number }).code !== 4902) throw error
     await wallet.request({
       method: 'wallet_addEthereumChain',
       params: [{
-        chainId: STUDIO_NEXT_CHAIN_ID_HEX,
+        chainId: STUDIONET_CHAIN_ID_HEX,
         chainName: 'GenLayer Studionet',
         nativeCurrency: { name: 'GEN', symbol: 'GEN', decimals: 18 },
-        rpcUrls: [STUDIO_NEXT_RPC],
-        blockExplorerUrls: ['https://explorer-studio-dev.genlayer.com/'],
+        rpcUrls: [STUDIONET_RPC],
+        blockExplorerUrls: ['https://explorer-studio.genlayer.com/'],
       }],
     })
+    await wallet.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: STUDIONET_CHAIN_ID_HEX }] })
   }
   return { address: accounts[0], wallet }
 }
@@ -99,7 +100,7 @@ export async function escrowWrite(
   value = BigInt(0),
 ): Promise<{ hash: string }> {
   const client = createClient({
-    chain: studioNext,
+    chain: studioNetwork,
     account: account as `0x${string}`,
     provider: wallet,
   })
@@ -124,7 +125,7 @@ export async function registryWrite(
   args: unknown[],
 ): Promise<{ hash: string }> {
   const client = createClient({
-    chain: studioNext,
+    chain: studioNetwork,
     account: account as `0x${string}`,
     provider: wallet,
   })

@@ -1,7 +1,6 @@
-# { "Depends": "py-genlayer:5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng" }
+# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 from dataclasses import dataclass
-import genlayer as gl
-from genlayer.storage import allow as allow_storage
+from genlayer import *
 import json
 
 
@@ -18,16 +17,16 @@ class RegistryAgent:
     model_card_url: str
     fingerprint_hash: str
     status: str
-    score: gl.u256
+    score: u256
     note: str
     active: bool
 
 
-class AgentRegistry(gl.contract.Contract):
+class AgentRegistry(gl.Contract):
     """Standalone Studionet registry and GenLayer fingerprint verifier."""
 
-    agents: gl.storage.TreeMap[str, RegistryAgent]
-    agent_keys: gl.storage.DynArray[str]
+    agents: TreeMap[str, RegistryAgent]
+    agent_keys: DynArray[str]
 
     def __init__(self):
         pass
