@@ -24,7 +24,22 @@ export type EthereumProvider = {
   providers?: EthereumProvider[]
 }
 
-function provider(): EthereumProvider {
+async function errorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) return error.message
+  if (error && typeof error === 'object') {
+    const details = error as { message?: unknown; data?: { message?: unknown }; code?: unknown }
+    const message = typeof details.message === 'string'
+      ? details.message
+      : typeof details.data?.message === 'string'
+        ? details.data.message
+        : ''
+    if (message) return message
+    if (details.code === 4001) return 'Transaction was rejected in your wallet.'
+  }
+  return fallback
+}
+
+async function provider(): Promise<EthereumProvider> {
   const injected = window as Window & {
     ethereum?: EthereumProvider
     okxwallet?: EthereumProvider
@@ -36,14 +51,23 @@ function provider(): EthereumProvider {
     ...(injected.ethereum?.providers ?? []),
     injected.ethereum,
   ].filter((wallet): wallet is EthereumProvider => Boolean(wallet?.request))
-  const preferred = candidates.find((wallet) => wallet.isOkxWallet || wallet.isRabby || wallet.isCoinbaseWallet)
-  const value = preferred ?? candidates[0]
-  if (!value) throw new Error('No browser EVM wallet was found. Install and unlock OKX Wallet, MetaMask, Rabby, Coinbase Wallet, or Brave Wallet, then reload this page.')
+  const evmWallets: EthereumProvider[] = []
+  for (const wallet of candidates) {
+    try {
+      const chainId = await wallet.request({ method: 'eth_chainId' })
+      if (typeof chainId === 'string' && chainId.startsWith('0x')) evmWallets.push(wallet)
+    } catch {
+      // Ignore non-EVM injected extensions.
+    }
+  }
+  const preferred = evmWallets.find((wallet) => wallet.isOkxWallet || wallet.isRabby || wallet.isCoinbaseWallet)
+  const value = preferred ?? evmWallets[0]
+  if (!value) throw new Error('No EVM wallet was found. Use OKX Wallet, MetaMask, Rabby, Coinbase Wallet, or Brave Wallet.')
   return value
 }
 
 export async function connectEvmWallet() {
-  const wallet = provider()
+  const wallet = await provider()
   let accounts: string[]
   try {
     accounts = await wallet.request({ method: 'eth_requestAccounts' }) as string[]
@@ -106,7 +130,9 @@ export async function escrowWrite(
     functionName,
     args,
     value,
-  )
+  ).catch(async (error) => {
+    throw new Error(await errorMessage(error, 'Your wallet could not submit the Studionet transaction.'))
+  })
   const transaction = await client.waitForTransactionReceipt({ hash })
   if (transaction.txExecutionResultName !== 'FINISHED_WITH_RETURN') {
     throw new Error(`Studionet transaction failed: ${transaction.txExecutionResultName ?? 'unknown result'}`)
@@ -131,7 +157,9 @@ export async function registryWrite(
     functionName,
     args,
     BigInt(0),
-  )
+  ).catch(async (error) => {
+    throw new Error(await errorMessage(error, 'Your wallet could not submit the Studionet transaction.'))
+  })
   const transaction = await client.waitForTransactionReceipt({ hash })
   if (transaction.txExecutionResultName !== 'FINISHED_WITH_RETURN') {
     throw new Error(`Studionet registry transaction failed: ${transaction.txExecutionResultName ?? 'unknown result'}`)
