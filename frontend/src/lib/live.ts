@@ -5,7 +5,11 @@ export const STUDIONET_RPC = process.env.NEXT_PUBLIC_GENLAYER_RPC_URL || 'https:
 export const STUDIONET_CHAIN_ID = 61999
 export const STUDIONET_CHAIN_ID_HEX = '0xF22F'
 export const AGENTTRUST_MARKETPLACE = process.env.NEXT_PUBLIC_AGENTTRUST_MARKETPLACE_ADDRESS || '0x7F10ad679FF2FD1bB90E602E557c400137e3aC19'
-export const AGENTTRUST_REGISTRY = process.env.NEXT_PUBLIC_AGENTTRUST_REGISTRY_ADDRESS || '0x209D7C1afBfD0c0915c064AE0BD3b22283b07805'
+const legacyRegistry = '0x209D7C1afBfD0c0915c064AE0BD3b22283b07805'
+const configuredRegistry = process.env.NEXT_PUBLIC_AGENTTRUST_REGISTRY_ADDRESS
+export const AGENTTRUST_REGISTRY = configuredRegistry && configuredRegistry.toLowerCase() !== legacyRegistry.toLowerCase()
+  ? configuredRegistry
+  : '0x120B30d7CBad18f9cc0a4286418731dC882134E8'
 export const LIVE_WORKER = process.env.NEXT_PUBLIC_AGENTTRUST_WORKER_ADDRESS || ''
 
 const studioNetwork = studionet
