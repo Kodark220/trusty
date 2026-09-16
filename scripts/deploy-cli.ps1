@@ -22,10 +22,6 @@ if ([string]::IsNullOrWhiteSpace($Owner)) {
     $Owner = ([regex]::Match($line, "0x[0-9a-fA-F]{40}")).Value
 }
 
-if ($Contract -like "*AgentRegistry.py" -and $Owner -notmatch '^0x[0-9a-fA-F]{40}$') {
-    Write-Error "Owner must be a 40-hex-character address."
-}
-
 if ([string]::IsNullOrWhiteSpace($Rpc)) {
     $Rpc = if ($Network -eq "studionet") {
         "https://studio.genlayer.com/api"
@@ -38,15 +34,11 @@ Write-Host "Network: $Network"
 Write-Host "RPC: $Rpc"
 Write-Host "Account: $Account"
 Write-Host "Contract: $Contract"
-if ($Owner) { Write-Host "Owner: $Owner" }
 Write-Host "Deploying contract with the official GenLayer CLI..."
 
 genlayer network set $Network
 genlayer account use $Account
 $deployArgs = @("--contract", $Contract, "--rpc", $Rpc)
-if ($Contract -like "*AgentRegistry.py") {
-    $deployArgs += @("--args", "addr#$Owner")
-}
 & genlayer deploy @deployArgs
 if ($LASTEXITCODE -ne 0) {
     throw "GenLayer CLI deployment failed with exit code $LASTEXITCODE"
