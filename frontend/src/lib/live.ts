@@ -91,7 +91,7 @@ async function writeWithEstimatedFees(
     functionName,
     args,
     value,
-    leaderOnly: functionName === 'deposit',
+    leaderOnly: true,
   }
   return client.writeContract(call as never)
 }
