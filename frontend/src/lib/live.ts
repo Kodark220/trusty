@@ -8,13 +8,7 @@ export const AGENTTRUST_ESCROW = process.env.NEXT_PUBLIC_AGENTTRUST_ESCROW_ADDRE
 export const AGENTTRUST_REGISTRY = process.env.NEXT_PUBLIC_AGENTTRUST_REGISTRY_ADDRESS || ''
 export const LIVE_WORKER = process.env.NEXT_PUBLIC_AGENTTRUST_WORKER_ADDRESS || ''
 
-const studioNetwork = {
-  ...studionet,
-  id: STUDIONET_CHAIN_ID,
-  name: 'GenLayer Studionet',
-  nativeCurrency: { name: 'GEN', symbol: 'GEN', decimals: 18 },
-  rpcUrls: { default: { http: [STUDIONET_RPC] } },
-} satisfies typeof studionet
+const studioNetwork = studionet
 
 export type EthereumProvider = {
   request(args: { method: string; params?: unknown[] }): Promise<unknown>
