@@ -133,7 +133,7 @@ export async function escrowWrite(
   ).catch(async (error) => {
     throw new Error(await errorMessage(error, 'Your wallet could not submit the Studionet transaction.'))
   })
-  const transaction = await client.waitForTransactionReceipt({ hash })
+  const transaction = await client.waitForFinalization({ hash })
   if (transaction.txExecutionResultName !== 'FINISHED_WITH_RETURN') {
     throw new Error(`Studionet transaction failed: ${transaction.txExecutionResultName ?? 'unknown result'}`)
   }
@@ -160,7 +160,7 @@ export async function registryWrite(
   ).catch(async (error) => {
     throw new Error(await errorMessage(error, 'Your wallet could not submit the Studionet transaction.'))
   })
-  const transaction = await client.waitForTransactionReceipt({ hash })
+  const transaction = await client.waitForFinalization({ hash })
   if (transaction.txExecutionResultName !== 'FINISHED_WITH_RETURN') {
     throw new Error(`Studionet registry transaction failed: ${transaction.txExecutionResultName ?? 'unknown result'}`)
   }
