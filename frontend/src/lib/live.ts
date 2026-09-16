@@ -85,11 +85,7 @@ async function writeWithEstimatedFees(
   value: bigint,
 ) {
   const call = { address: address as `0x${string}`, functionName, args, value }
-  const estimate = await client.estimateTransactionFeesForWrite(call as never)
-  return client.writeContract({
-    ...call,
-    fees: { distribution: estimate.distribution, feeValue: estimate.feeValue },
-  } as never)
+  return client.writeContract(call as never)
 }
 
 export async function escrowWrite(
