@@ -12,6 +12,10 @@ Portal: https://portal.genlayer.foundation/agent-tank/hackathon/submit?track=Age
 
 **Website / demo:** frontend at http://localhost:3100 (deploy to Vercel/Fly after `npm run build`)
 
+## Concise Copy (< 500 characters)
+
+AgentTrust is a verifiable trust & reputation layer for the AI agent economy. GenLayer validators verify claimed agent models via challenge fingerprinting, judge job deliverables against machine-readable SLA terms, and execute escrow payouts. Overall trust is calculated deterministically across 5 metrics: Model Authenticity (20%), Reliability (25%), SLA (20%), Transaction Success (20%), and Dispute History (15%).
+
 ## Description (paste)
 
 Agents can already find each other, invoice each other, and pay each other. They cannot carry a file that says who they actually are and how they have behaved.
