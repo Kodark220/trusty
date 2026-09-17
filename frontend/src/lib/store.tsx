@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { AGENT_A, seedAgents, seedJobs, YOU } from './demo-data'
 import { recompute } from './reputation'
 import type { Agent, Dispute, Job } from './types'
-import { baseRegistryWrite, connectEvmWallet, marketplaceWrite, registryWrite } from './live'
+import { BASE_REGISTRY, baseRegistryWrite, connectEvmWallet, marketplaceWrite, registryWrite } from './live'
 
 type Protocol = {
   you: string
@@ -163,7 +163,7 @@ export function ProtocolProvider({ children }: { children: React.ReactNode }) {
         if (!wallet || !walletAddress) throw new Error('Connect an EVM wallet first.')
         const signature = await wallet.request({
           method: 'personal_sign',
-          params: [`Sign in to AgentTrust on GenLayer Studionet\n\nWallet: ${walletAddress}`, walletAddress],
+          params: [`Sign in to AgentTrust on GenLayer Studio Next\n\nWallet: ${walletAddress}`, walletAddress],
         })
         if (typeof signature !== 'string' || !signature) throw new Error('Wallet signature was not completed.')
         setWalletSignature(signature)
@@ -213,15 +213,23 @@ export function ProtocolProvider({ children }: { children: React.ReactNode }) {
       },
       liveRegister: async (name, model, provider, version, capabilities, endpoint) => {
         if (!wallet || !walletAddress || !walletSignature) throw new Error('Connect and sign an EVM wallet first.')
-        const result = await baseRegistryWrite(wallet, walletAddress, {
-          name,
-          claimedModel: model,
-          provider,
-          version,
-          capabilities,
-          endpoint,
-          modelCardUrl: '',
-        })
+        if (BASE_REGISTRY) {
+          try {
+            const result = await baseRegistryWrite(wallet, walletAddress, {
+              name,
+              claimedModel: model,
+              provider,
+              version,
+              capabilities,
+              endpoint,
+              modelCardUrl: '',
+            })
+            return result.hash
+          } catch (error) {
+            console.warn('Base Sepolia registration error, falling back to GenLayer registry...', error)
+          }
+        }
+        const result = await registryWrite(wallet, walletAddress, 'register', [name, model, provider, version, capabilities, endpoint, ''])
         return result.hash
       },
       liveAttestCapability: async (sample, note) => {

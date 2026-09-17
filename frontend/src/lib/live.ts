@@ -1,28 +1,28 @@
 import { createClient, isSuccessful } from 'genlayer-js'
-import { studionet } from 'genlayer-js/chains'
+import { studioDevnet } from 'genlayer-js/chains'
 import { encodeFunctionData } from 'viem'
 
-export const STUDIONET_RPC = process.env.NEXT_PUBLIC_GENLAYER_RPC_URL || 'https://studio.genlayer.com/api'
-export const STUDIONET_CHAIN_ID = 61999
-export const STUDIONET_CHAIN_ID_HEX = '0xF22F'
-export const AGENTTRUST_MARKETPLACE = process.env.NEXT_PUBLIC_AGENTTRUST_MARKETPLACE_ADDRESS || '0x7F10ad679FF2FD1bB90E602E557c400137e3aC19'
+export const STUDIONET_RPC = process.env.NEXT_PUBLIC_GENLAYER_RPC_URL || 'https://studio-next.genlayer.com/api'
+export const STUDIONET_CHAIN_ID = 61997
+export const STUDIONET_CHAIN_ID_HEX = '0xF22D'
+export const AGENTTRUST_MARKETPLACE = process.env.NEXT_PUBLIC_AGENTTRUST_MARKETPLACE_ADDRESS || '0xbE6505366A839E31C16eCd7BD0f4E71C95FA616e'
 const legacyRegistry = '0x209D7C1afBfD0c0915c064AE0BD3b22283b07805'
 const configuredRegistry = process.env.NEXT_PUBLIC_AGENTTRUST_REGISTRY_ADDRESS
 export const AGENTTRUST_REGISTRY = configuredRegistry && configuredRegistry.toLowerCase() !== legacyRegistry.toLowerCase()
   ? configuredRegistry
-  : '0x120B30d7CBad18f9cc0a4286418731dC882134E8'
+  : '0x3eAf1a624749Db29bE82B144cb687e94897255b8'
 export const BASE_SEPOLIA_CHAIN_ID_HEX = '0x14A34'
 export const BASE_SEPOLIA_RPC = process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL || 'https://sepolia.base.org'
 export const BASE_REGISTRY = process.env.NEXT_PUBLIC_AGENTTRUST_BASE_REGISTRY_ADDRESS || ''
 export const LIVE_WORKER = process.env.NEXT_PUBLIC_AGENTTRUST_WORKER_ADDRESS || ''
 
-const studioNetwork = studionet
+const studioNetwork = studioDevnet
 const studionetChain = {
   chainId: STUDIONET_CHAIN_ID_HEX,
-  chainName: 'GenLayer Studionet',
+  chainName: 'GenLayer Studio Next',
   nativeCurrency: { name: 'GEN', symbol: 'GEN', decimals: 18 },
   rpcUrls: [STUDIONET_RPC],
-  blockExplorerUrls: ['https://explorer-studio.genlayer.com'],
+  blockExplorerUrls: ['https://explorer-studio-dev.genlayer.com'],
 }
 const baseSepoliaChain = {
   chainId: BASE_SEPOLIA_CHAIN_ID_HEX,
@@ -109,13 +109,13 @@ async function ensureStudionet(wallet: EthereumProvider) {
   } catch (error) {
     const details = error as { code?: number; message?: string }
     if (details.code !== 4902) {
-      throw new Error(details.message || 'Switch your wallet to GenLayer Studionet, then try again.')
+      throw new Error(details.message || 'Switch your wallet to GenLayer Studio Next, then try again.')
     }
     try {
       await wallet.request({ method: 'wallet_addEthereumChain', params: [studionetChain] })
     } catch (addError) {
       const addDetails = addError as { message?: string }
-      throw new Error(addDetails.message || 'Add GenLayer Studionet to your wallet, then try again.')
+      throw new Error(addDetails.message || 'Add GenLayer Studio Next to your wallet, then try again.')
     }
   }
 }

@@ -3,7 +3,7 @@ networks:
   localnet:
     url: "http://127.0.0.1:4000/api"
   studio_devnet:
-    url: "https://studio-dev.genlayer.com/api"
+    url: "https://studio-next.genlayer.com/api"
   studionet: {}
 
 paths:

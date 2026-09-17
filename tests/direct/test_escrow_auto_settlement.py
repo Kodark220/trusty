@@ -2,23 +2,12 @@
 
 
 def set_sender(vm, sender):
-    import genlayer.gl as gl
-    from genlayer.py.types import Address, u256
-
     vm.sender = sender
-    message = gl.message
-    gl.message = gl.MessageType(
-        contract_address=message.contract_address,
-        sender_address=Address(sender),
-        origin_address=Address(sender),
-        value=u256(vm._value),
-        chain_id=u256(vm._chain_id),
-    )
 
 
 def test_agents_negotiate_and_record_reputation(direct_vm, direct_deploy, direct_alice, direct_bob):
     registry = direct_deploy("contracts/AgentRegistry.py")
-    provider = "0x" + direct_bob.hex()
+    provider = str(direct_bob)
 
     set_sender(direct_vm, direct_alice)
     registry.register("Requester", "GPT-5.6", "OpenAI", "5.6", "research", "https://requester.example/api", "")

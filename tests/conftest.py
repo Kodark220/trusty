@@ -44,10 +44,15 @@ def _inject_message(vm: VMContext) -> None:
 
 
 def _allocate_contract(contract_cls, vm, *args, **kwargs):
-	from genlayer.py.storage import ROOT_SLOT_ID
-	from genlayer.py.storage._internal.generate import ORIGINAL_INIT_ATTR, _storage_build
+	from genlayer.storage import ROOT_SLOT_ID
+	try:
+		from genlayer.storage._internal.generate import ORIGINAL_INIT_ATTR, _storage_build, _BuilderCtx
+		ctx = _BuilderCtx({}, None)
+		descriptor = _storage_build(ctx, contract_cls)
+	except Exception:
+		from genlayer.storage._internal.generate import ORIGINAL_INIT_ATTR, _storage_build
+		descriptor = _storage_build(contract_cls, {})
 
-	descriptor = _storage_build(contract_cls, {})
 	instance = descriptor.get(vm._storage.get_store_slot(ROOT_SLOT_ID), 0)
 	init = getattr(descriptor.cls, "__init__", None)
 	if init and hasattr(init, ORIGINAL_INIT_ATTR):
@@ -80,9 +85,16 @@ _load_module = loader._load_module
 
 
 def _load_contract_module(contract_path):
-	import genlayer.gl.genvm_contracts as genvm_contracts
-
-	genvm_contracts.__known_contract__ = None
+	try:
+		import genlayer.contract as genlayer_contract
+		genlayer_contract.__known_contract__ = None
+	except Exception:
+		pass
+	try:
+		import genlayer.gl.genvm_contracts as genvm_contracts
+		genvm_contracts.__known_contract__ = None
+	except Exception:
+		pass
 	return _load_module(contract_path)
 
 

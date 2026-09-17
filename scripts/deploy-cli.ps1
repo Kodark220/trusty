@@ -2,9 +2,10 @@ param(
     [string]$Account = "",
     [string]$Contract = "contracts/AgentTrust.py",
     [string]$Owner = "",
-    [ValidateSet("studionet", "testnet-bradbury")]
+    [ValidateSet("studionet", "studio-dev", "testnet-bradbury")]
     [string]$Network = "testnet-bradbury",
-    [string]$Rpc = ""
+    [string]$Rpc = "",
+    [string]$Fees = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -23,10 +24,10 @@ if ([string]::IsNullOrWhiteSpace($Owner)) {
 }
 
 if ([string]::IsNullOrWhiteSpace($Rpc)) {
-    $Rpc = if ($Network -eq "studionet") {
-        "https://studio.genlayer.com/api"
-    } else {
-        "https://rpc-bradbury.genlayer.com"
+    $Rpc = switch ($Network) {
+        "studionet" { "https://studio.genlayer.com/api" }
+        "studio-dev" { "https://studio-next.genlayer.com/api" }
+        default { "https://rpc-bradbury.genlayer.com" }
     }
 }
 
@@ -39,6 +40,10 @@ Write-Host "Deploying contract with the official GenLayer CLI..."
 genlayer network set $Network
 genlayer account use $Account
 $deployArgs = @("--contract", $Contract, "--rpc", $Rpc)
+if (-not [string]::IsNullOrWhiteSpace($Fees)) {
+    $deployArgs += "--fees"
+    $deployArgs += $Fees
+}
 & genlayer deploy @deployArgs
 if ($LASTEXITCODE -ne 0) {
     throw "GenLayer CLI deployment failed with exit code $LASTEXITCODE"
