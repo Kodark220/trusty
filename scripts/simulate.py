@@ -9,7 +9,7 @@ from tests.test_reputation import authenticity_from_fingerprint, bayes, dispute_
 
 def card(agent_id, model, fp, jobs, success, sla, disputes, metrics):
     print(f"\nAgent #{agent_id}")
-    print(f"Model: {model} — fingerprint {fp}")
+    print(f"Model: {model} - fingerprint {fp}")
     print(f"Jobs: {jobs}")
     print(f"Success rate: {success}")
     print(f"SLA: {sla}")
@@ -60,11 +60,11 @@ def main():
 
     after = metrics("verified", 98, 181, 4, 179, 2, 181, 4, 0, 3)
     print("\nREPUTATION UPDATE")
-    print(f"  {a['overall']} → {after['overall']}")
+    print(f"  {a['overall']} -> {after['overall']}")
 
     print("\nCOUNTERFACTUAL: missed SLA, 40% refund")
     miss = metrics("verified", 98, 180, 5, 178, 3, 180, 5, 0, 3)
-    print(f"  trust would fall {a['overall']} → {miss['overall']}")
+    print(f"  trust would fall {a['overall']} -> {miss['overall']}")
 
 
 if __name__ == "__main__":
