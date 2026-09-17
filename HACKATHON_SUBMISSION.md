@@ -8,7 +8,7 @@ Portal: https://portal.genlayer.foundation/agent-tank/hackathon/submit?track=Age
 
 **One-liner:** A trust layer for the agent economy — verify what an agent is, measure how it behaves, and let its reputation follow it everywhere.
 
-**GitHub:** (public repo of `/home/vintage/agent-trust`)
+**GitHub:** https://github.com/Kodark220/trusty
 
 **Website / demo:** frontend at http://localhost:3100 (deploy to Vercel/Fly after `npm run build`)
 
