@@ -21,10 +21,19 @@ DELIVERY = json.dumps(json.dumps(
 ))
 
 
+def set_sender(vm, sender):
+    vm.sender = sender
+    try:
+        import genlayer as gl
+        gl.message.sender_address = sender
+    except Exception:
+        pass
+
+
 def test_register_hire_verify(direct_vm, direct_deploy, direct_alice, direct_bob):
     contract = direct_deploy("contracts/AgentTrust.py", direct_alice)
 
-    direct_vm.sender = direct_bob
+    set_sender(direct_vm, direct_bob)
     registered = contract.register_agent(
         "Ledger",
         "GPT-5.6",
@@ -42,7 +51,7 @@ def test_register_hire_verify(direct_vm, direct_deploy, direct_alice, direct_bob
     assert agent["fingerprint_status"] == "verified"
     assert agent["metrics"]["model_authenticity"] == 96
 
-    direct_vm.sender = direct_alice
+    set_sender(direct_vm, direct_alice)
     contract.deposit("200")
     hired = contract.hire_agent(
         worker,
@@ -53,10 +62,10 @@ def test_register_hire_verify(direct_vm, direct_deploy, direct_alice, direct_bob
     )
     assert hired["status"] == "escrowed"
 
-    direct_vm.sender = direct_bob
+    set_sender(direct_vm, direct_bob)
     contract.submit_delivery(str(hired["job_id"]), "manifest sha256 + 10000 rows", True)
 
-    direct_vm.sender = direct_alice
+    set_sender(direct_vm, direct_alice)
     direct_vm.mock_llm(r".*settlement judge.*", DELIVERY)
     settled = contract.verify_delivery(str(hired["job_id"]))
     assert settled["status"] == "settled"

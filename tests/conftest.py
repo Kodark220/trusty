@@ -1,5 +1,6 @@
 """Compatibility glue for gltest with the current GenLayer Python SDK."""
 
+import json
 import os
 import tempfile
 
@@ -8,15 +9,30 @@ from gltest.direct.sdk_compat import import_address, import_calldata
 from gltest.direct.vm import VMContext
 
 
+class _FallbackCalldata:
+	@staticmethod
+	def encode(data):
+		return json.dumps(data, default=str).encode("utf-8")
+
+
 def _inject_message(vm: VMContext) -> None:
 	try:
+		import fake_genlayer as fg
+		fg.message.sender_address = str(vm.sender)
+		fg.gl.message.sender_address = str(vm.sender)
+	except Exception:
+		pass
+	try:
 		calldata = import_calldata()
-	except ImportError:
-		from genlayer.py import calldata
+	except Exception:
+		calldata = _FallbackCalldata
 	try:
 		Address = import_address()
-	except ImportError:
-		from genlayer.py.types import Address
+	except Exception:
+		try:
+			from genlayer_py.types import Address
+		except Exception:
+			Address = str
 
 	def normalize(value):
 		return Address(value) if isinstance(value, bytes) else value
@@ -43,25 +59,6 @@ def _inject_message(vm: VMContext) -> None:
 	vm._direct_stdin_path = path
 
 
-def _allocate_contract(contract_cls, vm, *args, **kwargs):
-	from genlayer.storage import ROOT_SLOT_ID
-	try:
-		from genlayer.storage._internal.generate import ORIGINAL_INIT_ATTR, _storage_build, _BuilderCtx
-		ctx = _BuilderCtx({}, None)
-		descriptor = _storage_build(ctx, contract_cls)
-	except Exception:
-		from genlayer.storage._internal.generate import ORIGINAL_INIT_ATTR, _storage_build
-		descriptor = _storage_build(contract_cls, {})
-
-	instance = descriptor.get(vm._storage.get_store_slot(ROOT_SLOT_ID), 0)
-	init = getattr(descriptor.cls, "__init__", None)
-	if init and hasattr(init, ORIGINAL_INIT_ATTR):
-		init = getattr(init, ORIGINAL_INIT_ATTR)
-	if init:
-		init(instance, *args, **kwargs)
-	return instance
-
-
 def _cleanup(self: VMContext) -> None:
 	path = getattr(self, "_direct_stdin_path", None)
 	original = getattr(self, "_original_stdin_fd", None)
@@ -78,7 +75,6 @@ def _cleanup(self: VMContext) -> None:
 
 
 loader._inject_message_to_fd0 = _inject_message
-loader._allocate_contract = _allocate_contract
 VMContext._cleanup_after_deactivate = _cleanup
 
 _load_module = loader._load_module

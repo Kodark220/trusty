@@ -3,7 +3,6 @@
 import json
 
 import genlayer as gl
-from genlayer.types import *
 
 
 class AgentRegistry(gl.contract.Contract):
@@ -13,6 +12,7 @@ class AgentRegistry(gl.contract.Contract):
     agent_keys: str
 
     def __init__(self):
+        self.agents = gl.storage.TreeMap()
         self.agent_keys = "[]"
 
     def _fail(self, message: str) -> None:

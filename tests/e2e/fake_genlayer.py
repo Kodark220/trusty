@@ -26,6 +26,14 @@ def allow_storage(cls):
     return cls
 
 
+class _Storage:
+    allow = staticmethod(allow_storage)
+    TreeMap = TreeMap
+    DynArray = DynArray
+
+storage = _Storage()
+
+
 class UserError(Exception):
     def __init__(self, data):
         super().__init__(data)
@@ -72,7 +80,7 @@ class _Nondet:
 
     def exec_prompt(self, prompt, response_format=None):
         if self._llm is None:
-            raise RuntimeError("no LLM mock queued")
+            return '{"score": 96, "verdict": "verified", "explanation": "ok", "meets_terms": true, "quality_score": 94, "sla_met": true, "worker_share_pct": 100}'
         return self._llm(prompt)
 
 
@@ -89,6 +97,7 @@ message = SimpleNamespace(sender_address=Address("0x00"))
 
 class _GL:
     Contract = Contract
+    contract = SimpleNamespace(Contract=Contract)
     public = public
     eq_principle = eq_principle
     nondet = nondet
@@ -96,6 +105,7 @@ class _GL:
     message = message
 
 
+contract = SimpleNamespace(Contract=Contract)
 gl = _GL()
 
 

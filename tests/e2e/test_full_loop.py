@@ -8,6 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import fake_genlayer as fg  # noqa: E402
 
 sys.modules["genlayer"] = fg
+sys.modules["genlayer.storage"] = fg.storage
 
 # Load the contract as if `from genlayer import *` resolved to our fake.
 import importlib.util

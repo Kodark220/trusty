@@ -3,7 +3,6 @@
 import json
 
 import genlayer as gl
-from genlayer.types import *
 
 
 class AgentMarketplace(gl.contract.Contract):

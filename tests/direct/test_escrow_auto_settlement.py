@@ -3,6 +3,11 @@
 
 def set_sender(vm, sender):
     vm.sender = sender
+    try:
+        import genlayer as gl
+        gl.message.sender_address = sender
+    except Exception:
+        pass
 
 
 def test_agents_negotiate_and_record_reputation(direct_vm, direct_deploy, direct_alice, direct_bob):

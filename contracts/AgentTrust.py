@@ -133,6 +133,14 @@ class AgentTrust(gl.contract.Contract):
         self.total_settled = u256(0)
         self.total_disputes = u256(0)
         self.total_escrowed = u256(0)
+        self.agents = gl.storage.TreeMap()
+        self.agents_by_id = gl.storage.TreeMap()
+        self.agent_keys = gl.storage.DynArray()
+        self.jobs = gl.storage.TreeMap()
+        self.job_keys = gl.storage.DynArray()
+        self.disputes = gl.storage.TreeMap()
+        self.dispute_keys = gl.storage.DynArray()
+        self.balances = gl.storage.TreeMap()
 
     # ── internals ──────────────────────────────────────────
 
